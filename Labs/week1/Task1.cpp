@@ -2,12 +2,13 @@
 #include <lodepng.h>
 
 
+
 int main()
 {
 	std::string outputFilename = "output.png";
 
 	const int width = 1920, height = 1080;
-	const int nChannels = 4;
+	const int nChannels = 4; //red, green, blue, alpha
 
 	// Setting up an image buffer
 	// This std::vector has one 8-bit value for each pixel in each row and column of the image, and
@@ -15,15 +16,35 @@ int main()
 	// Remember 8-bit unsigned values can range from 0 to 255.
 	std::vector<uint8_t> imageBuffer(height*width*nChannels);
 
+
+
 	// This for loop sets all the pixels of the image to a cyan colour. 
+	//if statement added, so that if y is more than hight divided by 2 (as lower half of screen is 540+) set these as green, otherwise everything else will by cyan
 	for(int y = 0; y < height; ++y) 
 		for (int x = 0; x < width; ++x) {
-			int pixelIdx = x + y * width;
-			imageBuffer[pixelIdx * nChannels + 0] = 0; // Set red pixel values to 0
-			imageBuffer[pixelIdx * nChannels + 1] = 255; // Set green pixel values to 255 (full brightness)
-			imageBuffer[pixelIdx * nChannels + 2] = 255; // Set blue pixel values to 255 (full brightness)
-			imageBuffer[pixelIdx * nChannels + 3] = 255; // Set alpha (transparency) pixel values to 255 (fully opaque)
+			if (y > height / 2) { //added to make bottom half green
+				int pixelIdx = x + y * width;
+				imageBuffer[pixelIdx * nChannels + 0] = 0; // Set red pixel values to 0
+				imageBuffer[pixelIdx * nChannels + 1] = 255; // Set green pixel values to 255 (full brightness)
+				imageBuffer[pixelIdx * nChannels + 2] = 0; // Set blue pixel values to 255 (full brightness)
+				imageBuffer[pixelIdx * nChannels + 3] = 255; // Set alpha (transparency) pixel values to 255 (fully opaque)
+			}
+			else {
+				int pixelIdx = x + y * width;
+				imageBuffer[pixelIdx * nChannels + 0] = 0; // Set red pixel values to 0
+				imageBuffer[pixelIdx * nChannels + 1] = 255; // Set green pixel values to 255 (full brightness)
+				imageBuffer[pixelIdx * nChannels + 2] = 255; // Set blue pixel values to 255 (full brightness)
+				imageBuffer[pixelIdx * nChannels + 3] = 255; // Set alpha (transparency) pixel values to 255 (fully opaque)
+			}
 		}
+
+
+	//task 2: we want to be able to use a simle setPix function instead of all the int pixelIdx indexing stuff
+	//setPixel(imageBuffer, width, height, x, y, red val, blue val, green val, alpha val); 
+
+	
+
+
 
 	/// *** Lab Tasks ***
 	// * Task 1: Try adapting the code above to set the lower half of the image to be a green colour.
@@ -33,6 +54,7 @@ int main()
 	//           the reference be const?
 	//           We will use this setPixel function to build our rasteriser in the upcoming labs.
 	//			 Test your setPixel function by setting pixels in your image to different colours.
+	//task 2: imageBuffer should be reference as we want to change the original image, and we would be changing the pix valus so not const
 	// * Optional Task 3: Use your setPixel function to draw a circle in the centre of the image. Remember a point is
 	//           in a circle if sqrt((x - x_0)^2 + (y - y_0)^2) < radius (here x_0, y_0 are the coordinates at the middle of 
 	//           the circle). 
