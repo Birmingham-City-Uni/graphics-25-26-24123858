@@ -60,10 +60,24 @@ int main()
 	
 	// This while loop processes all the lines of the file
 	std::string line;
-	while (!bunnyFile.eof())
+	while (!bunnyFile.eof()) //to end of file
 	{
-		std::getline(bunnyFile, line);
+		std::getline(bunnyFile, line); 
 		// *** YOUR CODE HERE ***
+
+		std::stringstream lineSS(line); //makes line into stream, to be able to extract values
+		char lineStart;
+		lineSS >> lineStart; //read first character of line
+
+		if (lineStart == 'v') //vertex pos lines that start with a v only
+		{
+			Vector3 v; //to create empty vector to store coords
+			lineSS >> v[0] >> v[1] >> v[2];  //to read x, y, z values into v using opeator []
+
+			vertices.push_back(v); //to be able to store vert in list/save vert
+
+			std::cout << v << std::endl; //print
+		}
 
 		// Process each line of the file
 		// Load it into a new Vector3, if the line starts with a V
