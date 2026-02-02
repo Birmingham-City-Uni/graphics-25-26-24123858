@@ -53,7 +53,7 @@ int main()
 
 
 	//TASK 1: negative version of the image
-	//bright pixels should become dark and dark pixels become bright
+	//bright pixels become dark and dark pixels become bright
 	//as the colour channels range from 0–255, each value is subtracted from 255
 	for (int y = 0; y < height; ++y)
 	{
@@ -61,7 +61,7 @@ int main()
 		{
 			int pixelIdx = x + y * width;
 
-			//loop through RGB channels only, leave alpha channel unchanged as we dont need to modify transparency
+			//loop through RGB channels only, leave alpha channel unchanged as transparency isnt modified
 			for (int c = 0; c < 3; ++c)
 			{
 				imageBuffer[pixelIdx * 4 + c] = 255 - imageBuffer[pixelIdx * 4 + c];

@@ -15,8 +15,8 @@ void setPixel(std::vector<uint8_t>& imageBuffer,
 	uint8_t b,
 	uint8_t a)
 {
-	// Safety check to check that pixel coordinates are valid. — prevents drawing outside the image boundaries to ignore invalid pixels,
-	//so if x or y is not in valid range, its ignored to prevent crashes
+	//safety check to check that pixel coordinates are valid— prevents drawing outside the image boundaries
+	//to ignore invalid pixels, so if x or y is not in valid range, its ignored to prevent crashes
 	if (x < 0 || x >= width || y < 0 || y >= height)
 		return;
 
@@ -53,7 +53,7 @@ int main()
 
 	// This for loop sets all the pixels of the image to a cyan colour. 
 	//if statement added, so that if y is more than hight divided by 2 (as lower half of screen is 540+) set these as green, 
-	// otherwise everything else will by cyan
+	//otherwise everything else will by cyan
 	for (int y = 0; y < height; ++y)
 	{
 		for (int x = 0; x < width; ++x) 
@@ -90,8 +90,9 @@ int main()
 	}
 
 	//for task 3 circle
-	//If you draw the circle before setting the lower part of the image to be green, how does this modify the image?:it gets overwritten, 
-	// current drawing order- backfround green/cyan, circle, individual pixel dots
+	//If you draw the circle before setting the lower part of the image to be green, how does this modify the image?
+	//:it gets overwritten
+	//current drawing order- backfround green/cyan, circle, individual pixel dots
 	for (int y = 0; y < height; ++y)
 	{
 		for (int x = 0; x < width; ++x)
@@ -108,16 +109,17 @@ int main()
 		}
 	}
 
-	//draws a red pixel in top-left corner
+	//draws a red pixel in top left corner
 	setPixel(imageBuffer, width, height, 10, 10, 255, 0, 0, 255);
 
 	//draws a blue pixel near center
 	setPixel(imageBuffer, width, height, width / 2, height / 2, 0, 0, 255, 255);
 
-	//draws a red pixel in top-right corner
+	//draws a red pixel in top right corner
 	setPixel(imageBuffer, width, height, 1909, 10, 255, 0, 0, 255);
 
-	//draws a green pixel in top-right corner mirroring red - better method. left edge is 0, right edge is width - 1
+	////draws a green pixel in top right corner mirroring red - this is a better method than above one,
+	////left edge is 0, right edge is width - 1
 	//setPixel(imageBuffer, width, height, width - 1 - 10, 10, 0, 255, 0, 255);
 
 
