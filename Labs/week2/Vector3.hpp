@@ -17,6 +17,9 @@ public:
 	Vector3()
 	{
 		// YOUR CODE HERE
+		x_ = 0.0f;
+		y_ = 0.0f;
+		z_ = 0.0f;
 	}
 
 	// This constructor can be used to set the x, y and z components of a vector when it
@@ -25,6 +28,7 @@ public:
 	Vector3(float x, float y, float z)
 	{
 		// YOUR CODE HERE
+		x_ = x;
 	}
 
 	// Implement this method to add two vectors.
