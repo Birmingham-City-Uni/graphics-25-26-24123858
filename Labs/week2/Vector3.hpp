@@ -1,6 +1,8 @@
 #pragma once
 
 #include <ostream>
+#include <stdexcept> //for std::out_of_range used in operator[] - will report an error if an invalid vector index is accessed
+
 
 
 // *** Your Code Here! ***
