@@ -53,12 +53,40 @@ public:
 	{
 		// YOUR CODE HERE
 		// Implement the cross product, following the formula from the slides.
+
+		//this returns a new vector that is perpendicular (90°) to both original vectors.
+		//so if a.cross(b) is done the result points out of the surface formed by a and b.
+		//his is important because:it gives us triangle normals, which are used for lighting 
+		//and shows which way a surface is facing. The direction follows the right-hand rule
+		//( y1*z2 - z1*y2,
+		//  z1*x2 - x1*z2,
+		//  x1*y2 - y1*x2 )
+		//each line below calculates one component (x, y, z) of the resulting perpendicular vector.
+
+		return Vector3(
+			y_ * other.z() - z_ * other.y(), //x component
+			z_ * other.x() - x_ * other.z(), //y component
+			x_ * other.y() - y_ * other.x() //z component
+		);
 	}
 
 	float dot(const Vector3& other) const
 	{
 		// YOUR CODE HERE
 		// Implement the dot product, following the formula from the slides.
+
+		//this returns a single number (scalar) using formula x1*x2 + y1*y2 + z1*z2
+		//it measures how much two vectors are pointing in the same directio
+		//If: 
+		//result > 0 pointing roughly the same way
+		//result = 0 perpendicular/90 degrees
+		//result < 0 pointing in opposite directions
+		//the slides show:a · b = |a||b|cos(theta)
+
+
+		return x_ * other.x()
+			+ y_ * other.y()
+			+ z_ * other.z();
 	}
 
 	float length() const
