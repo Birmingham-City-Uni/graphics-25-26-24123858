@@ -16,6 +16,7 @@ public:
 		:x_(0), y_(0)
 	{
 		// YOUR CODE HERE
+		//components initialised to 0 using the initialiser list
 	}
 
 	// This constructor can be used to set the x, y and z components of a vector when it
@@ -25,6 +26,7 @@ public:
 		:x_(x), y_(y)
 	{
 		// YOUR CODE HERE
+		//values assigned using the initialiser list
 	}
 
 	// Implement this method to add two vectors.
@@ -114,12 +116,23 @@ public:
 		// To implement it here, we're interpreting these vectors as 3D vectors with a z-component of 0
 		// We're only returning a float (which is the z-component of the resulting vector)
 		// If you think about it, the x and y components of this output vector will always be 0.
+
+		//cross product for 2D vector, we treat the vectors as if they are 3D with z = 0
+		//result would point in the z direction, so we only return the z value.
+		//(x1 * y2) - (y1 * x2) is the formula used
+
+		return (x_ * other.y()) - (y_ * other.x());
 	}
 
 	const float dot(const Vector2& other)
 	{
 		// YOUR CODE HERE
 		// Implement the dot product, following the formula from the slides.
+
+		//dot product measures how similar the direction of two vectors is,
+		//(x1 * x2) + (y1 * y2) is the formula used
+
+		return (x_ * other.x()) + (y_ * other.y());
 	}
 
 private:
