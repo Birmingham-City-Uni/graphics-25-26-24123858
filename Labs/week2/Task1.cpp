@@ -98,6 +98,25 @@ int main()
 
 		// *** YOUR CODE HERE ***
 
+		//as the coords are in a small range (-0.5 to 0.5), i'll multiply them by a larger value (250) to make it large enough to see,
+		//also as image coords go upto 512
+		float scale = 250.0f;
+
+		//to scale the vertex pos and move it to the centre of the screen by adding half the width/height
+		int x = v[0] * scale + width / 2;
+
+		//usually in images y increases downwards, but in 3D y increases upwards, 
+		//so i'll need to flip it by multiplying by -1
+		int y = -v[1] * scale + height / 2;
+
+		//only draw pixel if its inside tge image bounds, to prevent crashing if points fall outside the screen
+		if (x >= 0 && x < width && y >= 0 && y < height)
+		{
+			//draw white pixel at vertex on screen
+			setPixel(imageBuffer, x, y, width, height, 255, 255, 255);
+
+		}
+
 	}
 
 
