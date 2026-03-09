@@ -69,8 +69,11 @@ public:
 		// This one should be quite easy - remember the intensity of an ambient
 		// light is the same everywhere!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		//ambient light has constant intensity everywhere in the scene
+		return _intensity;
 	}
 
 	virtual Type getType() override
@@ -82,16 +85,21 @@ public:
 	{
 		// Ambient lights do not have a direction, so throw an error!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		//ambient lights do not have a direction
+		throw std::runtime_error("Ambient light has no direction");
 	}
 
 	virtual Eigen::Vector3f getLightLocation() override
 	{
 		// Ambient lights do not have a location, so throw an error!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		throw std::runtime_error("Ambient light has no location");
 	}
 };
 
@@ -113,8 +121,11 @@ public:
 		// This one should also be quite easy - the intensity of an directional
 		// light is also the same everywhere!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		//directional light intensity is constant everywhere
+		return _intensity;
 	}
 
 	virtual Type getType() override
@@ -126,16 +137,21 @@ public:
 	{
 		// Directional lights *do* have a direction, so return it!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		//return the direction the light is travelling in
+		return _direction;
 	}
 
 	virtual Eigen::Vector3f getLightLocation() override
 	{
 		// Directional lights do not have a location, so throw an error!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		throw std::runtime_error("Directional light has no location");
 	}
 };	
 

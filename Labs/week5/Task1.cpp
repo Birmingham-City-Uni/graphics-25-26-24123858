@@ -80,9 +80,25 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 			// Work out the world-space position and normal at this point on the triangle.
 			// You can work this out using t.verts, t.norms and the barycentric coordinates.
 			// HINT: Don't forget to re-normalise your norm afterwards!
-			Eigen::Vector3f worldP = Eigen::Vector3f::Zero();
-			Eigen::Vector3f normP = Eigen::Vector3f::Zero();
+			//Eigen::Vector3f worldP = Eigen::Vector3f::Zero();
+			//Eigen::Vector3f normP = Eigen::Vector3f::Zero();
 			// *** END YOUR CODE ***
+			
+			//work out the worldspace position of pixel using barycentric interpolation,
+			//each vertex contributes based on barycentric weight
+			Eigen::Vector3f worldP =
+				b0 * t.verts[0] +
+				b1 * t.verts[1] +
+				b2 * t.verts[2];
+
+			//work out the interpolated surface normal at this pixel
+			Eigen::Vector3f normP =
+				b0 * t.norms[0] +
+				b1 * t.norms[1] +
+				b2 * t.norms[2];
+
+			//normals are unit vectors
+			normP.normalize();
 
 			// Work out colour at this position.
 			Eigen::Vector3f color = Eigen::Vector3f::Zero();
@@ -98,7 +114,8 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 				Eigen::Vector3f lightIntensity = Eigen::Vector3f::Zero();
 
 				// We only need to do the following if the light isn't an ambient light.
-				if (light->getType() != Light::Type::AMBIENT) {
+				if (light->getType() != Light::Type::AMBIENT) 
+				{
 
 					// Take the dot product of the normal with the light direction.
 					// Be careful - the getDirection function returns the direction from
@@ -110,6 +127,7 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 					// We don't want negative light - if your dot product was less than 0, set it to 0.
 
 					// Multiply the light intensity by the dot product.
+					
 				}
 
 				// Now add the intensity times the albedo.
@@ -117,7 +135,46 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 				// There's a handy coeffWiseMultiply function I've written for you in LinAlg.hpp for this.
 
 				// *** END YOUR CODE ***
+			
 			}
+
+			// Iterate over lights, and sum to find colour.
+			for (auto& light : lights) {
+
+				// Work out the intensity of this light source, at the point worldP.
+				Eigen::Vector3f lightIntensity = Eigen::Vector3f::Zero();
+
+				if (light->getType() == Light::Type::AMBIENT)
+				{
+					// Ambient light: just take its intensity (no direction needed)
+					lightIntensity = light->getLightIntensity();
+				}
+				else
+				{
+					// Non-ambient light (directional, point, spot)
+
+					// Get the direction from the surface to the light
+					Eigen::Vector3f lightDir = -light->getDirection(worldP); // negate per lab hint
+
+					// Dot product of surface normal and light direction
+					float dotProd = normP.dot(lightDir);
+
+					// Clamp negative values to 0 (light can't be negative)
+					if (dotProd < 0.0f)
+						dotProd = 0.0f;
+
+					// Scale the light intensity by the dot product
+					lightIntensity = light->getLightIntensity() * dotProd;
+				}
+
+				// Multiply light intensity by the surface albedo (object color)
+				Eigen::Vector3f contribution = coeffWiseMultiply(lightIntensity, albedo);
+
+				// Add this light's contribution to the final color
+				color += contribution;
+			}
+
+
 
 			Color c;
 			// Gamma-correcting colours.
