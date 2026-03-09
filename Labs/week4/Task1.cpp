@@ -115,9 +115,16 @@ void drawMesh(std::vector<unsigned char>& image, const Mesh& mesh,
 		// The matrix is 4x4, and the v0, v1, v2 are 3D! You'll need to convert them to 4D 
 		// homogeneous vectors first (add a 1 in the w component).
 		// You can use the vec3ToVec4 function above to do this.
-		tv0 = Eigen::Vector4f::Zero();
-		tv1 = Eigen::Vector4f::Zero();
-		tv2 = Eigen::Vector4f::Zero();
+		
+		//tv0 = Eigen::Vector4f::Zero();
+		//tv1 = Eigen::Vector4f::Zero();
+		//tv2 = Eigen::Vector4f::Zero();
+
+		//convert vertices to homogeneous coordinates (vec3 to vec4)
+		//and multiply them by the transform matrix to move/rotate/scale them
+		tv0 = transform * vec3ToVec4(v0);
+		tv1 = transform * vec3ToVec4(v1);
+		tv2 = transform * vec3ToVec4(v2);
 
 		Eigen::Vector2f p0(tv0.x() * 250 + width / 2, -tv0.y() * 250 + height / 2);
 		Eigen::Vector2f p1(tv1.x() * 250 + width / 2, -tv1.y() * 250 + height / 2);
@@ -143,14 +150,34 @@ void drawMesh(std::vector<unsigned char>& image, const Mesh& mesh,
 Eigen::Matrix4f translationMatrix(const Eigen::Vector3f& t)
 {
 	// *** Your code here ***
-	return Eigen::Matrix4f::Identity();
+	//return Eigen::Matrix4f::Identity();
+
+	//start with an identity matrix (no transformation by default)
+	Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+
+	//in a translation matrix, the final column stores
+	//how much to move the object in x, y, z directions
+	T(0, 3) = t.x(); 
+	T(1, 3) = t.y();
+	T(2, 3) = t.z(); 
+
+	return T;
 }
 
 // Implement this function that makes a uniform scaling matrix
 Eigen::Matrix4f scaleMatrix(float s)
 {
 	// *** Your code here ***
-	return Eigen::Matrix4f::Identity();
+	//return Eigen::Matrix4f::Identity();
+
+	Eigen::Matrix4f S = Eigen::Matrix4f::Identity();
+
+	//greater than 1=bigger, less than 1= smaller
+	S(0, 0) = s; //scale x
+	S(1, 1) = s; //y
+	S(2, 2) = s; //z
+
+	return S;
 }
 
 // Implement this function that makes a rotation matrix around the y
@@ -159,7 +186,20 @@ Eigen::Matrix4f scaleMatrix(float s)
 Eigen::Matrix4f rotateYMatrix(float theta)
 {
 	// *** Your code here ***
-	return Eigen::Matrix4f::Identity();
+	//return Eigen::Matrix4f::Identity();
+
+	Eigen::Matrix4f R = Eigen::Matrix4f::Identity();
+
+	//rotation around Y axis= spins left/right
+	//using cos(theta) and sin(theta) 
+	R(0, 0) = cos(theta);
+	R(0, 2) = sin(theta);
+
+	R(2, 0) = -sin(theta);
+	R(2, 2) = cos(theta);
+
+	return R;
+
 }
 
 int main()
@@ -257,9 +297,11 @@ int main()
 
 	std::string bunnyFilename = "../models/stanford_bunny_simplified.obj";
 	std::string dragonFilename = "../models/stanford_dragon_simplified.obj";
+	std::string armadilloFilename = "../models/stanford_armadillo_simplified.obj";
 
 	Mesh bunnyMesh = loadMeshFile(bunnyFilename);
 	Mesh dragonMesh = loadMeshFile(dragonFilename);
+	Mesh armadilloMesh = loadMeshFile(armadilloFilename);
 
 
 	// ============ TASK 3 =================
@@ -269,9 +311,28 @@ int main()
 	// the bunny and armadillo to match the ones in the example image.
 	// TIP: Think about the order of your transforms. Do you want to rotate first,
 	//      scale first, or translate first? Does the order matter?
+	//Scale, Rotate, Translate 
 
-	Eigen::Matrix4f bunnyTransform = Eigen::Matrix4f::Identity();
-	Eigen::Matrix4f dragonTransform = Eigen::Matrix4f::Identity();
+	//Eigen::Matrix4f bunnyTransform = Eigen::Matrix4f::Identity();
+	//Eigen::Matrix4f dragonTransform = Eigen::Matrix4f::Identity();
+
+	//bunny:
+	Eigen::Matrix4f bunnyTransform =
+		translationMatrix(Eigen::Vector3f(-0.3f, -0.2f, 0.0f)) *
+		rotateYMatrix(0.0f) *
+		scaleMatrix(0.8f);
+
+	//dragon
+	Eigen::Matrix4f dragonTransform =
+		translationMatrix(Eigen::Vector3f(0.3f, 0.2f, 0.0f)) *
+		rotateYMatrix(M_PI) *
+		scaleMatrix(0.9f);
+
+	//armadillo: rotated to face side
+	Eigen::Matrix4f armadilloTransform =
+		translationMatrix(Eigen::Vector3f(-0.7f, 0.6f, 0.0f)) *
+		rotateYMatrix(-M_PI / 2) *
+		scaleMatrix(0.3f);
 
 	// =========== TASK 4 ==============
 	// Prepare your own mesh in blender, exporting as OBJ
@@ -280,6 +341,7 @@ int main()
 
 	drawMesh(imageBuffer, bunnyMesh, Eigen::Vector3f(0, 1, 0), bunnyTransform, width, height);
 	drawMesh(imageBuffer, dragonMesh, Eigen::Vector3f(0, 1, 1), dragonTransform, width, height);
+	drawMesh(imageBuffer, armadilloMesh, Eigen::Vector3f(1, 0.5f, 0), armadilloTransform, width, height);
 
 	// *** Encoding image data ***
 	// PNG files are compressed to save storage space. 
