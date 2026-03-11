@@ -179,8 +179,16 @@ public:
 		// Then multiply the intensity by 1/distance^2, following the inverse
 		// square law.
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		//work out how far away the light is from the surface point
+		float distance = (surfaceLocation - _location).norm();
+
+		//apply inverse square falloff
+		float attenuation = 1.0f / (distance * distance);
+
+		return _intensity * attenuation;
 	}
 
 	virtual Type getType() override
@@ -195,15 +203,23 @@ public:
 		// the surface location.
 		// Don't forget to normalize it!
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		//vector from light to surface
+		Eigen::Vector3f dir = surfaceLocation - _location;
+
+		//normalize
+		return dir.normalized();
 	}
 
 	virtual Eigen::Vector3f getLightLocation() override
 	{
 		// *** YOUR CODE HERE ***
-		return Eigen::Vector3f::Zero();
+		//return Eigen::Vector3f::Zero();
 		// *** END YOUR CODE ***
+
+		return _location;
 	}
 };	
 

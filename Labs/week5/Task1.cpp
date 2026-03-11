@@ -122,59 +122,32 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 					// the light source to the surface.
 					// You want the vector from the surface outward, so *negate* this vector
 					// (i.e. use -direction, rather than direction).
-					float dotProd = 0.0f;
+					//float dotProd = 0.0f;
+					Eigen::Vector3f lightDir = -light->getDirection(worldP);
+
+					float dotProd = normP.dot(lightDir);
 
 					// We don't want negative light - if your dot product was less than 0, set it to 0.
+					if (dotProd < 0.0f)
+						dotProd = 0.0f;
 
 					// Multiply the light intensity by the dot product.
-					
+					lightIntensity = light->getLightIntensity() * dotProd;
+				}
+				else
+				{
+					// Ambient lights contribute their intensity directly
+					lightIntensity = light->getLightIntensity();
+
 				}
 
 				// Now add the intensity times the albedo.
 				// You need to use a coefficient-wise multiply (not matrix multiply, dot product or cross product!)
 				// There's a handy coeffWiseMultiply function I've written for you in LinAlg.hpp for this.
-
+				color += coeffWiseMultiply(lightIntensity, albedo);
 				// *** END YOUR CODE ***
 			
 			}
-
-			// Iterate over lights, and sum to find colour.
-			for (auto& light : lights) {
-
-				// Work out the intensity of this light source, at the point worldP.
-				Eigen::Vector3f lightIntensity = Eigen::Vector3f::Zero();
-
-				if (light->getType() == Light::Type::AMBIENT)
-				{
-					// Ambient light: just take its intensity (no direction needed)
-					lightIntensity = light->getLightIntensity();
-				}
-				else
-				{
-					// Non-ambient light (directional, point, spot)
-
-					// Get the direction from the surface to the light
-					Eigen::Vector3f lightDir = -light->getDirection(worldP); // negate per lab hint
-
-					// Dot product of surface normal and light direction
-					float dotProd = normP.dot(lightDir);
-
-					// Clamp negative values to 0 (light can't be negative)
-					if (dotProd < 0.0f)
-						dotProd = 0.0f;
-
-					// Scale the light intensity by the dot product
-					lightIntensity = light->getLightIntensity() * dotProd;
-				}
-
-				// Multiply light intensity by the surface albedo (object color)
-				Eigen::Vector3f contribution = coeffWiseMultiply(lightIntensity, albedo);
-
-				// Add this light's contribution to the final color
-				color += contribution;
-			}
-
-
 
 			Color c;
 			// Gamma-correcting colours.
@@ -261,7 +234,7 @@ int main()
 	// add some of these too!
 
 	// *** YOUR CODE HERE ***
-	//lights.emplace_back(new PointLight(Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(0.f, 1.0f, 0.f)));
+	lights.emplace_back(new PointLight(Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(0.f, 1.0f, 0.f)));
 	lights.emplace_back(new DirectionalLight(Eigen::Vector3f(0.4f, 0.4f, 0.4f), Eigen::Vector3f(1.f, 0.f, 0.0f)));
 	//lights.emplace_back(new SpotLight(Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.f, 1.f, 0.0f), Eigen::Vector3f(0, -1, 0), M_PI/8));
 	// *** END YOUR CODE ***
