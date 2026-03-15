@@ -122,11 +122,14 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 					// Subtask 3: Work out correct inputs for the phongSpecularTerm function inside drawTriangle, and draw an image!
 					// *** YOUR CODE HERE ***
 					// Work out the incoming light dir (from the light into the surface point).
-					Eigen::Vector3f incomingLightDir = Eigen::Vector3f::Zero();
+					//Eigen::Vector3f incomingLightDir = Eigen::Vector3f::Zero();
+					Eigen::Vector3f incomingLightDir = light->getDirection(worldP).normalized();
 					// Work out the view direction (from surface point towards camera). Make sure it's normalized!
-					Eigen::Vector3f viewDir = Eigen::Vector3f::Zero();
+					//Eigen::Vector3f viewDir = Eigen::Vector3f::Zero();
+					Eigen::Vector3f viewDir = (camWorldPos - worldP).normalized();
 					// Find the specular term by calling phongSpecularTerm.
-					float specularTerm = 0.f;
+					//float specularTerm = 0.f;
+					float specularTerm = phongSpecularTerm(incomingLightDir, normP, viewDir, specularExponent);
 					// *** END YOUR CODE ***
 
 					Eigen::Vector3f specularOut = specularColor * specularTerm;
@@ -267,9 +270,12 @@ int main()
 
 	// Subtask 4: Try re-rendering your image with different lighting setups, and specular exponents, and see how it changes!
 	// You can modify the lighting setup here....
+	//can chenge light colour, set to white currently 
 	std::vector<std::unique_ptr<Light>> lights;
 	lights.emplace_back(new AmbientLight(Eigen::Vector3f(0.1f, 0.1f, 0.1f)));
 	lights.emplace_back(new DirectionalLight(Eigen::Vector3f(0.4f, 0.4f, 0.4f), Eigen::Vector3f(1.f, -1.f, 0.0f)));
+	//point light
+	//lights.emplace_back(new PointLight(Eigen::Vector3f(2.0f, 2.0f, 2.0f), Eigen::Vector3f(0.f, 1.0f, 3.f)));
 
 	Mesh bunnyMesh = loadMeshFile(bunnyFilename);
 	Mesh planeMesh = loadMeshFile(planeFilename);
@@ -277,7 +283,7 @@ int main()
 
 	Eigen::Matrix4f bunnyTransform; 
 	bunnyTransform = translationMatrix(Eigen::Vector3f(0.0f, -1.0f, 3.f)) * rotateYMatrix(M_PI);
-	// .... and change the specular exponent here!
+	// .... and change the specular exponent here! Chenge 10.f, 
 	drawMesh(imageBuffer, zBuffer, bunnyMesh, Eigen::Vector3f(0.f, 0.5f, 0.8f), 
 		Eigen::Vector3f::Ones()*1.0f, 10.f, camWorldPos,
 		bunnyTransform, worldToClip, lights, width, height);

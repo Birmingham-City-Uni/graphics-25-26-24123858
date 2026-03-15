@@ -12,8 +12,14 @@ Eigen::Vector3f reflect(const Eigen::Vector3f& incoming, const Eigen::Vector3f& 
 {
 	// *** YOUR CODE HERE ***
 	// replace this with the reflected vector.
-	return Eigen::Vector3f::Zero();
+	//return Eigen::Vector3f::Zero();
 	// *** END YOUR CODE ***
+	
+	//Reflection formula: R = I - 2(N·I)N
+	//This flips the incoming vector about the surface normal
+	//incoming vector points into the surface, reflected points out
+	Eigen::Vector3f reflected = incoming - 2.0f * incoming.dot(normal) * normal;
+	return reflected;
 }
 
 // Subtask 2: Implement the Phong specular term in Shading.hpp, to find the intensity of specular reflection
@@ -30,16 +36,20 @@ float phongSpecularTerm(const Eigen::Vector3f& incomingLightDir, const Eigen::Ve
 {
 	// *** YOUR CODE HERE ***
 	// Find the reflected direction using the reflect function
-	Eigen::Vector3f reflectionDir = Eigen::Vector3f::Zero();
+	//Eigen::Vector3f reflectionDir = Eigen::Vector3f::Zero();
+	Eigen::Vector3f reflectionDir = reflect(incomingLightDir, normal);
 
 	// Find dot product between reflected and view directions.
-	float reflectDotNorm = 0.f;
+	//float reflectDotNorm = 0.f;
+	float reflectDotNorm = reflectionDir.dot(viewDir);
 
 	// Make sure dot product is non-negative (if it's less than 0, set it to 0!)
-	reflectDotNorm = 0.f;
+	//reflectDotNorm = 0.f;
+	reflectDotNorm = std::max(reflectDotNorm, 0.0f);
 
 	// Finally, raise to specular exponent and return.
-	return 0.f;
+	//return 0.f;
+	return powf(reflectDotNorm, exponent);
 	// *** END YOUR CODE ***
 }
 
@@ -57,15 +67,24 @@ float blinnPhongSpecularTerm(const Eigen::Vector3f& incomingLightDir, const Eige
 {
 	// *** YOUR CODE HERE ***
 	// Find the half-vector (average of view dir and light dir)
-	Eigen::Vector3f halfVec = Eigen::Vector3f::Zero();
+	//Eigen::Vector3f halfVec = Eigen::Vector3f::Zero();
+	//Blinn-Phong uses a "halfway vector" instead of a reflection vector which
+	//is the vector exactly halfway between the view direction and the incoming 
+	//light direction (negated). Its cheaper to compute than a full reflection
+	Eigen::Vector3f halfVec = (-incomingLightDir + viewDir).normalized();
 
 	// Find dot product of half-vector and normal.
-	float halfDotNorm = 0.f;
+	//float halfDotNorm = 0.f;
+	//When this is high (vectors align)= looking at the specular highlight
+	float halfDotNorm = halfVec.dot(normal);
 	
 	// Force the dot product to be non-negative (if <0, set to 0)
+	//clamp to 0 - negative means light is on wrong side of surface
+	halfDotNorm = std::max(halfDotNorm, 0.0f);
 
 	//Return the dot product raised to the exponent
-	return 0.f;
+	//return 0.f;
+	return powf(halfDotNorm, exponent);
 	// *** END YOUR CODE ***
 }
 
