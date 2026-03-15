@@ -313,12 +313,12 @@ void drawMesh(std::vector<unsigned char>& image,
 		// skip drawing this triangle.
 		// Hint: I've made a function outsideClipBox in LinAlg.hpp to help with this!
 		//check if vertices are outside the clip box
-		//if (outsideClipBox(vClip0) && outsideClipBox(vClip1) && outsideClipBox(vClip2)) {
-		//	continue;
-		//}
-		if (outsideClipBox(vClip0) || outsideClipBox(vClip1) || outsideClipBox(vClip2)) {
+		if (outsideClipBox(vClip0) && outsideClipBox(vClip1) && outsideClipBox(vClip2)) {
 			continue;
 		}
+		/*if (outsideClipBox(vClip0) || outsideClipBox(vClip1) || outsideClipBox(vClip2)) {
+			continue;
+		}*/
 
 
 		// Work out the screen space coordinates based on the image height and width.
