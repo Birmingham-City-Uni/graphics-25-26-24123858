@@ -24,3 +24,5 @@ https://sketchfab.com/3d-models/vent-shafts-pack-5da507fe65e04bc98252a7d4db0f27b
 
 https://sketchfab.com/3d-models/door-from-portal-2-original-e0fa18a874dc4a5bbc391f9bf876d2f5
 
+https://sketchfab.com/3d-models/sektor-interior-solutions-forte-perforated-fa0bc2bee60242059615e7b16d9ab145
+

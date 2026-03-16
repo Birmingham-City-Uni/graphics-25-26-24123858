@@ -107,9 +107,9 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 
 			// Get the depths from the camera-space position of the 3 corners.
 			//float depth0 = 0.f, depth1 = 0.f, depth2 = 0.f;
-			float depth0 = -t.cam[0].z();
-			float depth1 = -t.cam[1].z();
-			float depth2 = -t.cam[2].z();
+			float depth0 = t.cam[0].z();
+			float depth1 = t.cam[1].z();
+			float depth2 = t.cam[2].z();
 			
 			// Work out the depth at the point P
 			//float depthP = 0.f;
