@@ -15,9 +15,12 @@ Eigen::Vector3f reflect(const Eigen::Vector3f& incoming, const Eigen::Vector3f& 
 	//return Eigen::Vector3f::Zero();
 	// *** END YOUR CODE ***
 	
-	//Reflection formula: R = I - 2(N·I)N
+	//reflection formula: R = I - 2(N·I)N
+	//lab presso notes were + not -
 	//This flips the incoming vector about the surface normal
 	//incoming vector points into the surface, reflected points out
+	//I (incomingLightDir) points from the light to the surface (into the surface),
+	//so - version of the formula used, as R = I + 2(N·I)N assumes I points out of the surface
 	Eigen::Vector3f reflected = incoming - 2.0f * incoming.dot(normal) * normal;
 	return reflected;
 }
