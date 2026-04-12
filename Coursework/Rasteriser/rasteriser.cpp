@@ -1,10 +1,11 @@
 //TODO:
+//scene hpp for models and textures
+//camera hpp?
 //add in all models and pos correctly
 //pos camera in correct location
-//scene class for models and textures
 //normal mapping
 //shadow mapping
-//lighting- ambient and point
+//lighting- currently ambient and point
 
 
 // This define is necessary to get the M_PI constant.
