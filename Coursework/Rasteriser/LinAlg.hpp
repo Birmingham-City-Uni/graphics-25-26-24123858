@@ -66,6 +66,17 @@ Eigen::Matrix4f rotateYMatrix(float theta)
 		0.f, 0.f, 0.f, 1.f;
 	return output;
 }
+Eigen::Matrix4f rotateZMatrix(float theta)
+{
+	// *** Your code here ***
+	Eigen::Matrix4f output;
+	output <<
+		cosf(theta), -sinf(theta), 0.f, 0.f,
+		sinf(theta), cosf(theta), 0.f, 0.f,
+		0.f, 0.f, 1.f, 0.f,
+		0.f, 0.f, 0.f, 1.f;
+	return output;
+}
 
 template<typename T> T coeffWiseMultiply(const T& l, const T& r)
 {

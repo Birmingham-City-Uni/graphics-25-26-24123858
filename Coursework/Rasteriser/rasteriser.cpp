@@ -1,6 +1,5 @@
 //TODO:
 //scene hpp for models and textures
-//camera hpp?
 //add in all models and pos correctly
 //pos camera in correct location
 //normal mapping
@@ -19,6 +18,7 @@
 #include "Light.hpp"
 #include "Mesh.hpp"
 #include "Shading.hpp"
+//#include "Scene.hpp"
 
 
 
@@ -361,8 +361,13 @@ int main()
 	float zFar = 100.f;
 	Eigen::Matrix4f projection = projectionMatrix(height, width, 70.f * M_PI / 180.f, zFar, zNear);
 	
-	//Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 0.8f, 0.f)) * rotateXMatrix(0.4f);
-	Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 5.0f, -5.0f)) * rotateXMatrix(0.4f);
+
+	//need to change camera pos when all models have been added and placed
+	//Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 5.0f, -5.0f)) * rotateXMatrix(0.4f);
+	Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.0f, 0.0f, -10.0f)); // (3.43438f, 1.24049f, -7.13643f));
+		//rotateYMatrix(-26 * M_PI / 180)*
+		//rotateXMatrix((90 - 73)* M_PI / 180);
+
 	Eigen::Vector3f camWorldPos = (cameraToWorld * Eigen::Vector4f(0, 0, 0, 1)).block<3, 1>(0, 0);
 	Eigen::Matrix4f worldToCamera = cameraToWorld.inverse();
 
@@ -376,23 +381,30 @@ int main()
 	//Mesh myMesh = loadMeshFile("../models/model.obj");
 	//Eigen::Matrix4f meshTransform = translationMatrix(Eigen::Vector3f(0.f, 0.f, 5.f)) * rotateYMatrix(M_PI);;
 	
-	Mesh model1 = loadMeshFile("../models/model1.obj");
+	Mesh cube = loadMeshFile("../models/cube.obj");
 	Eigen::Matrix4f transform1 =
-		translationMatrix(Eigen::Vector3f(0.f, 0.f, 5.f))*
-		//scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f)) *
-		rotateYMatrix(M_PI);
+		translationMatrix(Eigen::Vector3f(1.0f, -0.3f, -2.5f)) *
+		scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+		/*rotateZMatrix(0.0f) *
+		rotateYMatrix(180* M_PI/180) *
+		rotateXMatrix(-90.0f* M_PI/180);*/
 
-	Mesh model2 = loadMeshFile("../models/model2.obj");
+	Mesh button = loadMeshFile("../models/button.obj");
 	Eigen::Matrix4f transform2 =
-		translationMatrix(Eigen::Vector3f(2.0f, 0.f, 5.f))* //right of mod1
-		//scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f)) *
-		rotateYMatrix(M_PI + 0.5f); //slight rotate
+		translationMatrix(Eigen::Vector3f(1.0f, -6.1f, -2.0f))*
+		scaleMatrix(Eigen::Vector3f(2.0f, 2.0f, 2.0f));
+		/*rotateZMatrix(-3.16f) *
+		rotateYMatrix(0.0f) *
+		rotateXMatrix(90.0f * M_PI / 180);*/
+		//rotateYMatrix(M_PI + 0.5f); 
 
 	Mesh model3 = loadMeshFile("../models/model3.obj");
 	Eigen::Matrix4f transform3 =
-		translationMatrix(Eigen::Vector3f(-1.f, -2.0f, 5.f)) * //move down
-		scaleMatrix(Eigen::Vector3f(1.5f, 1.5f, 1.5f)); // * //smaller
+		translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) * //move down
+		scaleMatrix(Eigen::Vector3f(1.5f, 1.5f, 1.5f)) * //smaller
 		//rotateYMatrix(M_PI);
+		rotateYMatrix(0.0f);
+	
 
 	//std::vector<uint8_t> texture;
 	//unsigned int texWidth, texHeight;
@@ -403,8 +415,8 @@ int main()
 	unsigned int texWidth2, texHeight2;
 	unsigned int texWidth3, texHeight3;
 
-	lodepng::decode(texture1, texWidth1, texHeight1, "../models/texture1.png");
-	lodepng::decode(texture2, texWidth2, texHeight2, "../models/texture2.png");
+	lodepng::decode(texture1, texWidth1, texHeight1, "../models/cubeTex.png");
+	lodepng::decode(texture2, texWidth2, texHeight2, "../models/buttonTex.png");
 	lodepng::decode(texture3, texWidth3, texHeight3, "../models/texture3.png");
 
 
@@ -418,17 +430,17 @@ int main()
 	//	lights, width, height);
 
 	//model1
-	drawMesh(imageBuffer, zBuffer, model1,
+	drawMesh(imageBuffer, zBuffer, cube,
 		texture1, texWidth1, texHeight1,
 		Eigen::Vector3f::Ones(), //specular colour
-		50.f, //specular exponent
+		50.f, //specular exponent- how shiny
 		ShadingMode::BLINN_PHONG,
 		camWorldPos,
 		transform1, worldToCamera, projection,
 		lights, width, height);
 
 	//model2
-	drawMesh(imageBuffer, zBuffer, model2,
+	drawMesh(imageBuffer, zBuffer, button,
 		texture2, texWidth2, texHeight2,
 		Eigen::Vector3f::Ones(),
 		50.f,
