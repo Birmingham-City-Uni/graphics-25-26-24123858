@@ -18,7 +18,7 @@
 #include "Light.hpp"
 #include "Mesh.hpp"
 #include "Shading.hpp"
-//#include "Scene.hpp"
+#include "Scene.hpp"
 
 
 
