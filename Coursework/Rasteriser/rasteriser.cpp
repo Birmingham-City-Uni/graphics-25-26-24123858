@@ -123,7 +123,7 @@ int main()
 
     // Model 3: offset down and scaled up
     Eigen::Matrix4f transform3 =
-        translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) *
+        translationMatrix(Eigen::Vector3f(0.0f, 1.0f, 0.0f)) *
         scaleMatrix(Eigen::Vector3f(1.5f, 1.5f, 1.5f)) *
         //rotateYMatrix(M_PI);
         rotateYMatrix(0.0f);
@@ -136,6 +136,113 @@ int main()
         Eigen::Vector3f::Ones(),
         50.f
     ));
+
+    //floor
+    Eigen::Matrix4f transform4 =
+        translationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f)) *
+        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+        //rotateYMatrix(0.0f);
+    /*rotateZMatrix(0.0f) *
+    rotateYMatrix(180* M_PI/180) *
+    rotateXMatrix(-90.0f* M_PI/180);*/
+
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/floor1.obj",
+        "../models/floor1Tex.png",
+        transform4,
+        Eigen::Vector3f::Ones(), // specular colour: white
+        50.f                     // specular exponent: fairly shiny
+    ));
+
+    ////glass
+    //Eigen::Matrix4f transform5 =
+    //    translationMatrix(Eigen::Vector3f(-1.0f, 0.0f, 0.0f)) *
+    //    scaleMatrix(Eigen::Vector3f(0.02f, 0.02f, 0.02f)) *
+    //    rotateZMatrix(0.0f) *
+    //    rotateYMatrix(-45 * M_PI / 180) *
+    //    rotateXMatrix(-45.0f * M_PI / 180);
+
+    //scene.addObject(SceneObject::loadFromFile
+    //(
+    //    "../models/glass.obj",
+    //    "../models/glassTex.png",
+    //    transform5,
+    //    Eigen::Vector3f::Ones(), // specular colour: white
+    //    50.f                     // specular exponent: fairly shiny
+    //));
+
+
+    ////gun
+    Eigen::Matrix4f transform6 =
+        translationMatrix(Eigen::Vector3f(3.0f, 0.0f, 0.0f)) *
+        scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
+        //rotateYMatrix(M_PI);
+    /*rotateZMatrix(0.0f) *
+    rotateYMatrix(180* M_PI/180) *
+    rotateXMatrix(-90.0f* M_PI/180);*/
+
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/gun.obj",
+        "../models/gunTex.png",
+        transform6,
+        Eigen::Vector3f::Ones(), // specular colour: white
+        50.f                     // specular exponent: fairly shiny
+    ));
+
+    //floor2
+    Eigen::Matrix4f transform7 =
+        translationMatrix(Eigen::Vector3f(0.0f, -0.3f, 0.0f)) *
+        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+    /*rotateZMatrix(0.0f) *
+    rotateYMatrix(180* M_PI/180) *
+    rotateXMatrix(-90.0f* M_PI/180);*/
+
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/floor2.obj",
+        "../models/floor2Tex.png",
+        transform7,
+        Eigen::Vector3f::Ones(), // specular colour: white
+        50.f                     // specular exponent: fairly shiny
+    ));
+
+
+    //door
+    Eigen::Matrix4f transform8 =
+        translationMatrix(Eigen::Vector3f(2.0f, -1.0f, -2.5f)) *
+        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+    /*rotateZMatrix(0.0f) *
+    rotateYMatrix(180* M_PI/180) *
+    rotateXMatrix(-90.0f* M_PI/180);*/
+
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/door.obj",
+        "../models/doorTex.png",
+        transform8,
+        Eigen::Vector3f::Ones(), // specular colour: white
+        50.f                     // specular exponent: fairly shiny
+    ));
+
+    //wall
+    Eigen::Matrix4f transform9 =
+        translationMatrix(Eigen::Vector3f(1.0f, -0.3f, 2.0f)) *
+        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+    /*rotateZMatrix(0.0f) *
+    rotateYMatrix(180* M_PI/180) *
+    rotateXMatrix(-90.0f* M_PI/180);*/
+
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/wall.obj",
+        "../models/floor2Tex.png",
+        transform9,
+        Eigen::Vector3f::Ones(), // specular colour: white
+        50.f                     // specular exponent: fairly shiny
+    ));
+
 
     // RENDER AND SAVE
 
