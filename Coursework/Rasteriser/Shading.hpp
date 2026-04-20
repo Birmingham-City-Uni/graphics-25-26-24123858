@@ -14,7 +14,6 @@ Eigen::Vector3f reflect(const Eigen::Vector3f& incoming, const Eigen::Vector3f& 
 	// replace this with the reflected vector.
 	//return Eigen::Vector3f::Zero();
 	// *** END YOUR CODE ***
-	
 	//reflection formula: R = I - 2(N·I)N
 	//lab presso notes were + not -
 	//This flips the incoming vector about the surface normal
@@ -80,8 +79,7 @@ float blinnPhongSpecularTerm(const Eigen::Vector3f& incomingLightDir, const Eige
 	//float halfDotNorm = 0.f;
 	//When this is high (vectors align)= looking at the specular highlight
 	float halfDotNorm = halfVec.dot(normal);
-	
-	// Force the dot product to be non-negative (if <0, set to 0)
+	//Force the dot product to be non-negative (if <0, set to 0)
 	//clamp to 0 - negative means light is on wrong side of surface
 	halfDotNorm = std::max(halfDotNorm, 0.0f);
 
@@ -90,4 +88,3 @@ float blinnPhongSpecularTerm(const Eigen::Vector3f& incomingLightDir, const Eige
 	return powf(halfDotNorm, exponent);
 	// *** END YOUR CODE ***
 }
-

@@ -12,7 +12,8 @@ protected:
 public:
 	Light(const Eigen::Vector3f& intensity)
 		:_intensity(intensity)
-	{};
+	{
+	};
 
 	enum Type { POINT, SPOT, DIRECTIONAL, AMBIENT };
 
@@ -58,7 +59,8 @@ private:
 public:
 	AmbientLight(const Eigen::Vector3f& intensity)
 		:Light(intensity)
-	{};
+	{
+	};
 
 	virtual Eigen::Vector3f getIntensityAt(const Eigen::Vector3f& surfaceLocation) override
 	{
@@ -94,7 +96,8 @@ private:
 public:
 	DirectionalLight(const Eigen::Vector3f& intensity, const Eigen::Vector3f& direction)
 		:Light(intensity), _direction(direction.normalized())
-	{};
+	{
+	};
 
 	virtual Eigen::Vector3f getIntensityAt(const Eigen::Vector3f& surfaceLocation) override
 	{
@@ -115,7 +118,7 @@ public:
 	{
 		throw std::runtime_error("ERROR: Directional lights have no location.");
 	}
-};	
+};
 
 /// <summary>
 /// Point lights have a location in the world, and their intensity falls off with the 
@@ -129,7 +132,8 @@ private:
 public:
 	PointLight(const Eigen::Vector3f& intensity, const Eigen::Vector3f& location)
 		:Light(intensity), _location(location)
-	{};
+	{
+	};
 
 	virtual Eigen::Vector3f getIntensityAt(const Eigen::Vector3f& surfaceLocation) override
 	{
@@ -151,7 +155,7 @@ public:
 	{
 		return _location;
 	}
-};	
+};
 
 /// <summary>
 /// Spot lights have a location in the world, and their intensity falls off with the 
@@ -170,7 +174,8 @@ public:
 	SpotLight(const Eigen::Vector3f& intensity, const Eigen::Vector3f& location,
 		const Eigen::Vector3f& direction, float angle)
 		:Light(intensity), _location(location), _direction(direction), _cosAngle(cosf(angle))
-	{};
+	{
+	};
 
 	virtual Eigen::Vector3f getIntensityAt(const Eigen::Vector3f& surfaceLocation) override
 	{
@@ -197,5 +202,4 @@ public:
 	{
 		return _location;
 	}
-};	
-
+};
