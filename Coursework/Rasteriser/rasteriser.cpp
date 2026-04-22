@@ -9,6 +9,18 @@
 //HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
 
 
+//REMOVE CLIPPING
+//REMOVE TEXTURE FOR WALL, FLOOR 1 AND 2, ADD COLOUR PERAM
+//INCREASE LIGHTING
+//POSITION POINT LIGHT
+//POSITION MODELS 
+//POSITION CAMERA
+
+//METALLIC/SHININESS/SPECULAR ON WALL, FLOOR 1 AND 2, OBJECTS- MAKE INTO A UNIFORMS TO CONFIGURE PER MODEL
+//MIRROR/GLASS REFLECTION
+//EMISSIVE/BLOOM LIGHTING
+
+
 //This define is necessary to get the M_PI constant.
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -123,7 +135,7 @@ int main()
 
     // Model 3: offset down and scaled up
     Eigen::Matrix4f transform3 =
-        translationMatrix(Eigen::Vector3f(0.0f, 1.0f, 0.0f)) *
+        translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) *
         scaleMatrix(Eigen::Vector3f(1.5f, 1.5f, 1.5f)) *
         //rotateYMatrix(M_PI);
         rotateYMatrix(0.0f);
@@ -140,11 +152,8 @@ int main()
     //floor
     Eigen::Matrix4f transform4 =
         translationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f)) *
-        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
-        //rotateYMatrix(0.0f);
-    /*rotateZMatrix(0.0f) *
-    rotateYMatrix(180* M_PI/180) *
-    rotateXMatrix(-90.0f* M_PI/180);*/
+        scaleMatrix(Eigen::Vector3f(0.8f, 0.8f, 0.8f));
+        //rotateXMatrix(M_PI);
 
     scene.addObject(SceneObject::loadFromFile
     (
@@ -155,22 +164,23 @@ int main()
         50.f                     // specular exponent: fairly shiny
     ));
 
-    ////glass
-    //Eigen::Matrix4f transform5 =
-    //    translationMatrix(Eigen::Vector3f(-1.0f, 0.0f, 0.0f)) *
-    //    scaleMatrix(Eigen::Vector3f(0.02f, 0.02f, 0.02f)) *
-    //    rotateZMatrix(0.0f) *
-    //    rotateYMatrix(-45 * M_PI / 180) *
-    //    rotateXMatrix(-45.0f * M_PI / 180);
+    //glass
+    Eigen::Matrix4f transform5 =
+        translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) *
+        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f)) *
+        rotateYMatrix(5.0f * M_PI / 180);
+     /*   rotateZMatrix(0.0f) *
+        rotateYMatrix(45.0f * M_PI / 180) *
+        rotateXMatrix(45.0f * M_PI / 180);*/
 
-    //scene.addObject(SceneObject::loadFromFile
-    //(
-    //    "../models/glass.obj",
-    //    "../models/glassTex.png",
-    //    transform5,
-    //    Eigen::Vector3f::Ones(), // specular colour: white
-    //    50.f                     // specular exponent: fairly shiny
-    //));
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/glass.obj",
+        "../models/glassTex.png",
+        transform5,
+        Eigen::Vector3f::Ones(), // specular colour: white
+        50.f                     // specular exponent: fairly shiny
+    ));
 
 
     ////gun
@@ -228,7 +238,7 @@ int main()
 
     //wall
     Eigen::Matrix4f transform9 =
-        translationMatrix(Eigen::Vector3f(1.0f, -0.3f, 2.0f)) *
+        translationMatrix(Eigen::Vector3f(-2.0f, -0.3f, 2.0f)) *
         scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
