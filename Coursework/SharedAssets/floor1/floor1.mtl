@@ -1,0 +1,13 @@
+# Blender 5.1.0 MTL File: 'Blender Scene.blend'
+# www.blender.org
+
+newmtl Material.006
+Ns 360.000153
+Ka 0.236364 0.236364 0.236364
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 3
+map_Kd C:/Users/leahs/Desktop/GitHub/graphics-25-26-24123858/Coursework/Blender Files/floor.png
+map_Bump -bm 2.500000 C:/Users/leahs/Desktop/GitHub/graphics-25-26-24123858/Coursework/Blender Files/floornorm.png
