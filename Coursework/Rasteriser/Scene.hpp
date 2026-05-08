@@ -42,6 +42,10 @@ public:
     // Material: how shiny the object is (higher = tighter highlight)
     float specularExponent;
 
+    //if useFlatColor is true flatColor is used as the albedo instead of the texture
+    bool useModelColor = false;
+    Eigen::Vector3f modelColor = Eigen::Vector3f::Zero();
+
     // Constructor: takes everything needed to define a scene object.
     // Using an initialiser list sets member variables directly,
     // which is slightly more efficient than assigning inside the body.
@@ -58,6 +62,37 @@ public:
         specularExponent(specularExponent)
     {
     }
+
+
+    //constructor for flat model colours— no texture file 
+    SceneObject(
+        const Mesh& mesh,
+        const Eigen::Vector3f& modelColor,
+        const Eigen::Matrix4f& modelToWorld,
+        const Eigen::Vector3f& specularColor = Eigen::Vector3f::Ones(),
+        float specularExponent = 50.f)
+        : mesh(mesh),
+        texture(), texWidth(0), texHeight(0),
+        modelToWorld(modelToWorld),
+        specularColor(specularColor),
+        specularExponent(specularExponent),
+        useModelColor(true),
+        modelColor(modelColor)
+    {
+    }
+
+    //static method
+    static SceneObject loadFromFileColour(
+        const std::string& meshPath,
+        const Eigen::Vector3f& modelColor,
+        const Eigen::Matrix4f& modelToWorld,
+        const Eigen::Vector3f& specularColor = Eigen::Vector3f::Ones(),
+        float specularExponent = 50.f)
+    {
+        Mesh mesh = loadMeshFile(meshPath);
+        return SceneObject(mesh, modelColor, modelToWorld, specularColor, specularExponent);
+    }
+
 
     // Static factory method: loads a mesh and texture from file and constructs a SceneObject.
     // A "factory" method is a common C++ pattern where a static function creates and returns
@@ -319,11 +354,31 @@ private:
                 // Gamma-decode the texture colour to bring it into linear light space
                 // (raise to power 2.2 converts from sRGB to linear)
                 //convert to linear space (gamma correct)
-                Eigen::Vector3f albedo(
+               /* Eigen::Vector3f albedo(
                     powf(texColor.r / 255.0f, 2.2f),
                     powf(texColor.g / 255.0f, 2.2f),
                     powf(texColor.b / 255.0f, 2.2f)
-                );
+                );*/
+
+                Eigen::Vector3f albedo;
+                if (obj.useModelColor)
+                {
+                    //use the flat colour directly (already in linear space)
+                    albedo = obj.modelColor;
+                }
+                else
+                {
+                    //sample texture and gammadecode to linear light space
+                    Color texColor = getPixel(obj.texture, texX, texY, obj.texWidth, obj.texHeight);
+                    albedo = Eigen::Vector3f
+                    (
+                        powf(texColor.r / 255.0f, 2.2f),
+                        powf(texColor.g / 255.0f, 2.2f),
+                        powf(texColor.b / 255.0f, 2.2f)
+                    );
+                }
+
+
 
                 // Perspective-correct clip-space depth (used for depth testing)
                 // Interpolate to find the correct clip-space depth (perspective-correct)

@@ -1,0 +1,22 @@
+# Blender 5.1.0 MTL File: 'Blender Scene.blend'
+# www.blender.org
+
+newmtl portal_button_blue
+Ns 210.764435
+Ka 0.331818 0.331818 0.331818
+Ks 0.500000 0.500000 0.500000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd -o 0 -1 0 C:/portal_button_blue.jpg
+map_Ke -o 0 -1 0 C:/portal_button_blue emission.png
+
+newmtl portal_button_switch
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd -o 0 -1 0 C:/portal_button_blue.jpg

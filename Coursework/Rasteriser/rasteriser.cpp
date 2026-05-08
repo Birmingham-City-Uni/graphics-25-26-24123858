@@ -59,9 +59,9 @@ int main()
     // and what direction it's pointing). Invert it to get world-to-camera.
     //float zNear = 0.1f;
     //float zFar = 100.f;
-    Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 0.0f, -10.0f)); //* //(3.43438f, 1.24049f, -7.13643f));
-    //rotateYMatrix(-26 * M_PI / 180)*
-    //rotateXMatrix((90 - 73)* M_PI / 180);
+    Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(7.0f, 0.7f, -9.0f))* //(3.43438f, 1.24049f, -7.13643f));
+    rotateYMatrix(-35 * M_PI / 180);
+    rotateXMatrix(-10* M_PI / 180);
 
     Eigen::Vector3f camWorldPos = (cameraToWorld * Eigen::Vector4f(0, 0, 0, 1)).block<3, 1>(0, 0);
     Eigen::Matrix4f worldToCamera = cameraToWorld.inverse();
@@ -81,9 +81,12 @@ int main()
     // Lights are added via addLight() using unique_ptr for ownership.
     // The Light base class uses polymorphism — we can add any type
     // of light (Ambient, Point, Directional, Spot) to the same list.
-    scene.addLight(std::make_unique<AmbientLight>(Eigen::Vector3f(0.1f, 0.1f, 0.1f)));
-    scene.addLight(std::make_unique<PointLight>(2.f * Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(0.f, 3.0f, 0.0f))); //add rotation to pointlight to point to camera not downwards
-
+    //SpotLight arguments: intensity, world pos, direction it points, cone angle (radians)
+    scene.addLight(std::make_unique<AmbientLight>(Eigen::Vector3f(0.2f, 0.2f, 0.2f)));
+    //scene.addLight(std::make_unique<PointLight>(8.f * Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(-5.0f, 4.0f, 5.0f))); 
+    scene.addLight(std::make_unique<SpotLight>(12.f * Eigen::Vector3f(1.f, 1.f, 1.f), Eigen::Vector3f(-0.0f, -1.0f, -2.2f), Eigen::Vector3f(15.f, -2.f, -10.f).normalized(), M_PI / 3.f));                                   
+    //intensity, position, direction, cone half-angle (45 degrees) //HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
+   
 
     // ADD SCENE OBJECTS
 
@@ -98,8 +101,8 @@ int main()
 
     //cube
     Eigen::Matrix4f transform1 =
-        translationMatrix(Eigen::Vector3f(1.0f, -0.3f, -2.5f)) *
-        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+        translationMatrix(Eigen::Vector3f(2.5f, -0.3f, -3.0f)) *
+        scaleMatrix(Eigen::Vector3f(0.45f, 0.45f, 0.45f));
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
     rotateXMatrix(-90.0f* M_PI/180);*/
@@ -116,8 +119,8 @@ int main()
 
     //button
     Eigen::Matrix4f transform2 =
-        translationMatrix(Eigen::Vector3f(1.0f, -6.1f, -2.0f)) *
-        scaleMatrix(Eigen::Vector3f(2.0f, 2.0f, 2.0f));
+        translationMatrix(Eigen::Vector3f(2.2f, -1.0f, -3.0f)) *
+        scaleMatrix(Eigen::Vector3f(0.7f, 0.7f, 0.7f));
     /*rotateZMatrix(-3.16f) *
     rotateYMatrix(0.0f) *
     rotateXMatrix(90.0f * M_PI / 180);*/
@@ -133,42 +136,27 @@ int main()
     ));
 
 
-    // Model 3: offset down and scaled up
-    Eigen::Matrix4f transform3 =
-        translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) *
-        scaleMatrix(Eigen::Vector3f(1.5f, 1.5f, 1.5f)) *
-        //rotateYMatrix(M_PI);
-        rotateYMatrix(0.0f);
-
-    scene.addObject(SceneObject::loadFromFile
-    (
-        "../models/model3.obj",
-        "../models/texture3.png",
-        transform3,
-        Eigen::Vector3f::Ones(),
-        50.f
-    ));
-
     //floor
-    Eigen::Matrix4f transform4 =
+    Eigen::Matrix4f transform3 =
         translationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f)) *
-        scaleMatrix(Eigen::Vector3f(0.8f, 0.8f, 0.8f));
+        scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
         //rotateXMatrix(M_PI);
 
-    scene.addObject(SceneObject::loadFromFile
+
+    scene.addObject(SceneObject::loadFromFileColour
     (
         "../models/floor1.obj",
-        "../models/floor1Tex.png",
-        transform4,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f(0.85f, 0.83f, 0.80f),  //offwhite
+        transform3,
+        Eigen::Vector3f::Ones(), //specular colour: white
+        50.f                     //specular exponent: fairly shiny
     ));
 
     //glass
-    Eigen::Matrix4f transform5 =
-        translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) *
-        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f)) *
-        rotateYMatrix(5.0f * M_PI / 180);
+    Eigen::Matrix4f transform4 =
+        translationMatrix(Eigen::Vector3f(-1.2f, 0.8f, -1.2f)) *
+        scaleMatrix(Eigen::Vector3f(0.5f, 0.8f, 0.8f)) *
+        rotateXMatrix(-3.0f * M_PI / 180);
      /*   rotateZMatrix(0.0f) *
         rotateYMatrix(45.0f * M_PI / 180) *
         rotateXMatrix(45.0f * M_PI / 180);*/
@@ -177,17 +165,17 @@ int main()
     (
         "../models/glass.obj",
         "../models/glassTex.png",
-        transform5,
+        transform4,
         Eigen::Vector3f::Ones(), // specular colour: white
         50.f                     // specular exponent: fairly shiny
     ));
 
 
     ////gun
-    Eigen::Matrix4f transform6 =
-        translationMatrix(Eigen::Vector3f(3.0f, 0.0f, 0.0f)) *
-        scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
-        //rotateYMatrix(M_PI);
+    Eigen::Matrix4f transform5 =
+        translationMatrix(Eigen::Vector3f(5.5f, -0.8f, -4.8f)) *
+        scaleMatrix(Eigen::Vector3f(2.0f, 2.0f, 2.0f)) *
+        rotateYMatrix(-55 * M_PI / 180);
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
     rotateXMatrix(-90.0f* M_PI/180);*/
@@ -196,33 +184,34 @@ int main()
     (
         "../models/gun.obj",
         "../models/gunTex.png",
-        transform6,
+        transform5,
         Eigen::Vector3f::Ones(), // specular colour: white
         50.f                     // specular exponent: fairly shiny
     ));
 
     //floor2
-    Eigen::Matrix4f transform7 =
-        translationMatrix(Eigen::Vector3f(0.0f, -0.3f, 0.0f)) *
-        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+    Eigen::Matrix4f transform6 =
+        translationMatrix(Eigen::Vector3f(1.0f, -2.4f, 2.5f)) *
+        scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
     rotateXMatrix(-90.0f* M_PI/180);*/
 
-    scene.addObject(SceneObject::loadFromFile
+    scene.addObject(SceneObject::loadFromFileColour
     (
         "../models/floor2.obj",
-        "../models/floor2Tex.png",
-        transform7,
+        Eigen::Vector3f(0.18f, 0.18f, 0.18f),  //dark grey
+        transform6,
         Eigen::Vector3f::Ones(), // specular colour: white
         50.f                     // specular exponent: fairly shiny
     ));
 
 
     //door
-    Eigen::Matrix4f transform8 =
-        translationMatrix(Eigen::Vector3f(2.0f, -1.0f, -2.5f)) *
-        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+    Eigen::Matrix4f transform7 =
+        translationMatrix(Eigen::Vector3f(3.3f, -1.5f, 2.6f)) *
+        scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f)) *
+        rotateYMatrix(M_PI);
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
     rotateXMatrix(-90.0f* M_PI/180);*/
@@ -231,15 +220,15 @@ int main()
     (
         "../models/door.obj",
         "../models/doorTex.png",
-        transform8,
+        transform7,
         Eigen::Vector3f::Ones(), // specular colour: white
         50.f                     // specular exponent: fairly shiny
     ));
 
     //wall
-    Eigen::Matrix4f transform9 =
-        translationMatrix(Eigen::Vector3f(-2.0f, -0.3f, 2.0f)) *
-        scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
+    Eigen::Matrix4f transform8 =
+        translationMatrix(Eigen::Vector3f(5.0f, -1.7f, 5.0f)) *
+        scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
     rotateXMatrix(-90.0f* M_PI/180);*/
@@ -247,11 +236,76 @@ int main()
     scene.addObject(SceneObject::loadFromFile
     (
         "../models/wall.obj",
-        "../models/floor2Tex.png",
-        transform9,
+        "../models/wall2Tex.png",
+       // Eigen::Vector3f(0.10f, 0.10f, 0.10f),  // darker grey
+        transform8,
         Eigen::Vector3f::Ones(), // specular colour: white
         50.f                     // specular exponent: fairly shiny
     ));
+
+    //sign
+    Eigen::Matrix4f transform9 =
+        translationMatrix(Eigen::Vector3f(3.8f, -0.1f, 0.8f)) *
+        scaleMatrix(Eigen::Vector3f(0.3f, 0.3f, 0.3f)) *
+        rotateYMatrix(M_PI);
+
+    scene.addObject(SceneObject::loadFromFile
+    (
+        "../models/sign.obj",
+        "../models/signTex.png",
+        transform9,
+        Eigen::Vector3f::Ones(),
+        50.f
+    ));
+
+
+
+    ////lights1  //HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
+    //Eigen::Matrix4f transform10 =
+    //    translationMatrix(Eigen::Vector3f(0.0f, 0.0f, -8.0f)) *
+    //    scaleMatrix(Eigen::Vector3f(0.3f, 0.3f, 0.3f));
+    //    //rotateXMatrix(180 * M_PI / 180);
+
+    //scene.addObject(SceneObject::loadFromFile
+    //(
+    //    "../models/lights1.obj",
+    //    "../models/lights1Tex.png",
+    //    transform10,
+    //    Eigen::Vector3f::Ones(),
+    //    50.f
+    //));
+
+    ////lights2
+    //Eigen::Matrix4f transform11 =
+    //    translationMatrix(Eigen::Vector3f(0.0f, -0.5f, -8.0f)) *
+    //    scaleMatrix(Eigen::Vector3f(0.2f, 0.2f, 0.2f));
+    ////rotateYMatrix(M_PI);
+
+    //scene.addObject(SceneObject::loadFromFile
+    //(
+    //    "../models/lights2.obj",
+    //    "../models/lights2Tex.png",
+    //    transform11,
+    //    Eigen::Vector3f::Ones(),
+    //    50.f
+    //));
+
+    ////lights3
+    //Eigen::Matrix4f transform12 =
+    //    translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) *
+    //    scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f)) *
+    //    rotateYMatrix(M_PI);
+
+    //scene.addObject(SceneObject::loadFromFile
+    //(
+    //    "../models/lights3.obj",
+    //    "../models/lights3Tex.png",
+    //    transform12,
+    //    Eigen::Vector3f::Ones(),
+    //    50.f
+    //));
+
+
 
 
     // RENDER AND SAVE
