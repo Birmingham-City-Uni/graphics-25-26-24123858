@@ -99,19 +99,19 @@ template<typename T> T coeffWiseMultiply(const T& l, const T& r)
 bool outsideClipBox(const Eigen::Vector4f& v)
 {
     //return
-    //    v.x() < -1.f ||
-    //    v.y() < -1.f ||
-    //    v.z() < -1.f ||
-    //    v.x() > 1.f ||
-    //    v.y() > 1.f ||
-    //    v.z() > 1.f;
+    //    v.x() < -1.0f ||
+    //    v.y() < -1.0f ||
+    //    v.z() < -1.0f ||
+    //    v.x() > 1.0f ||
+    //    v.y() > 1.0f ||
+    //    v.z() > 1.0f;
 
-    float margin = 3.0f; //increased to allow offscreen geometry
+    float margin = 2.0f; //increased to allow offscreen geometry
     return
         v.x() < -margin ||
         v.y() < -margin ||
-        v.z() < -margin ||
+        v.z() < -1.0f ||
         v.x() > margin ||
         v.y() > margin ||
-        v.z() > margin;
+        v.z() > 1.0f;
 }

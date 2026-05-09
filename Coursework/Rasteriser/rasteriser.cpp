@@ -191,7 +191,7 @@ int main()
 
     //floor2
     Eigen::Matrix4f transform6 =
-        translationMatrix(Eigen::Vector3f(1.0f, -2.4f, 2.5f)) *
+        translationMatrix(Eigen::Vector3f(1.7f, -2.4f, 2.9f)) *
         scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
     /*rotateZMatrix(0.0f) *
     rotateYMatrix(180* M_PI/180) *
