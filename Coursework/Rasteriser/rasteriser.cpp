@@ -6,9 +6,6 @@
 //shadow mapping
 //lighting- currently ambient and point
 
-//HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
-
-
 //REMOVE CLIPPING- increase clipping range, leave z (depth) guard band clipping 
 //REMOVE TEXTURE FOR WALL, FLOOR 1 AND 2, ADD COLOUR PERAM
 //INCREASE LIGHTING
@@ -19,6 +16,8 @@
 //METALLIC/SHININESS/SPECULAR ON WALL, FLOOR 1 AND 2, OBJECTS- MAKE INTO A UNIFORMS TO CONFIGURE PER MODEL
 //MIRROR/GLASS REFLECTION
 //EMISSIVE/BLOOM LIGHTING
+
+//HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
 
 
 //This define is necessary to get the M_PI constant.
@@ -32,9 +31,9 @@
 
 
 //projection matrix helper
-// Builds a perspective projection matrix from field-of-view, aspect ratio,
-// and near/far clip distances. Kept as a free function since it's
-// a one-off calculation rather than something belonging to a class.
+//Builds a perspective projection matrix from field-of-view, aspect ratio,
+//and near/far clip distances. Kept as a free function since it's
+//a one-off calculation rather than something belonging to a class.
 
 Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f * M_PI / 180.f, float zFar = 10.f, float zNear = 0.1f)
 {
@@ -55,8 +54,8 @@ int main()
 
 
     //camera and projection setup 
-    // Build the camera-to-world matrix (where the camera is in the world
-    // and what direction it's pointing). Invert it to get world-to-camera.
+    //Build the camera-to-world matrix (where the camera is in the world
+    //and what direction it's pointing). Invert it to get world-to-camera.
     //float zNear = 0.1f;
     //float zFar = 100.f;
     Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(7.0f, 0.7f, -9.0f))* //(3.43438f, 1.24049f, -7.13643f));
@@ -68,19 +67,19 @@ int main()
     Eigen::Matrix4f projection = projectionMatrix(height, width, 70.f * M_PI / 180.f, 100.f, 0.1f); //zFar, zNear //zFar=100 zNear=0.1 uncomment from above
 
 
-    // CREATE THE SCENE
+    //CREATE THE SCENE
 
-    // The Scene constructor sets up the image buffer, depth buffer,
-    // and stores the camera/projection matrices ready for rendering.
+    //The Scene constructor sets up the image buffer, depth buffer,
+    //and stores the camera/projection matrices ready for rendering
 
     Scene scene(width, height, worldToCamera, projection, camWorldPos, ShadingMode::BLINN_PHONG);
 
 
     //lights- ambient nd point
 
-    // Lights are added via addLight() using unique_ptr for ownership.
-    // The Light base class uses polymorphism — we can add any type
-    // of light (Ambient, Point, Directional, Spot) to the same list.
+    //Lights are added via addLight() using unique_ptr for ownership.
+    //The Light base class uses polymorphism: can add any type
+    //of light (Ambient, Point, Directional, Spot) to the same list
     //SpotLight arguments: intensity, world pos, direction it points, cone angle (radians)
     scene.addLight(std::make_unique<AmbientLight>(Eigen::Vector3f(0.2f, 0.2f, 0.2f)));
     //scene.addLight(std::make_unique<PointLight>(8.f * Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(-5.0f, 4.0f, 5.0f))); 
@@ -88,15 +87,13 @@ int main()
     //intensity, position, direction, cone half-angle (45 degrees) //HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
    
 
-    // ADD SCENE OBJECTS
+    //ADD SCENE OBJECTS
 
-    // SceneObject::loadFromFile() is a static factory method that loads
-    // the mesh + texture from file and packages them into a SceneObject.
-    // Each object has its own transform (position, rotation, scale)
-    // and material (specular colour + shininess exponent).
+    //SceneObject::loadFromFile() loads the mesh + texture from file and packages them into a SceneObject
+    //Each object has its own transform (position, rotation, scale) and material (specular colour + shininess exponent)
     //
-    // This replaces the old approach of separate Mesh variables, separate
-    // texture vectors, and separate transform matrices all in main().
+    //This replaces the old approach of separate Mesh variables, separate
+    //texture vectors, and separate transform matrices all in main().
 
 
     //cube
@@ -112,8 +109,8 @@ int main()
         "../models/cube.obj",
         "../models/cubeTex.png",
         transform1,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), //specular colour: white
+        50.f                     //specular exponent: fairly shiny
     ));
 
 
@@ -148,8 +145,8 @@ int main()
         "../models/floor1.obj",
         Eigen::Vector3f(0.85f, 0.83f, 0.80f),  //offwhite
         transform3,
-        Eigen::Vector3f::Ones(), //specular colour: white
-        50.f                     //specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), 
+        50.f                     
     ));
 
     //glass
@@ -166,8 +163,8 @@ int main()
         "../models/glass.obj",
         "../models/glassTex.png",
         transform4,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), 
+        50.f                     
     ));
 
 
@@ -185,8 +182,8 @@ int main()
         "../models/gun.obj",
         "../models/gunTex.png",
         transform5,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), 
+        50.f                     
     ));
 
     //floor2
@@ -202,8 +199,8 @@ int main()
         "../models/floor2.obj",
         Eigen::Vector3f(0.18f, 0.18f, 0.18f),  //dark grey
         transform6,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), 
+        50.f                     
     ));
 
 
@@ -221,8 +218,8 @@ int main()
         "../models/door.obj",
         "../models/doorTex.png",
         transform7,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), 
+        50.f                     
     ));
 
     //wall
@@ -237,10 +234,10 @@ int main()
     (
         "../models/wall.obj",
         "../models/wall2Tex.png",
-       // Eigen::Vector3f(0.10f, 0.10f, 0.10f),  // darker grey
+       // Eigen::Vector3f(0.10f, 0.10f, 0.10f),  //darker grey
         transform8,
-        Eigen::Vector3f::Ones(), // specular colour: white
-        50.f                     // specular exponent: fairly shiny
+        Eigen::Vector3f::Ones(), 
+        50.f                    
     ));
 
     //sign
@@ -308,10 +305,10 @@ int main()
 
 
 
-    // RENDER AND SAVE
+    //RENDER AND SAVE
 
-    // render() loops over all objects and draws each one using the
-    // shared lights, camera and projection — all encapsulated in Scene.
+    //render() loops over all objects and draws each one using the
+    //shared lights, camera and projection: all encapsulated in Scene
 
     scene.render();
     scene.saveImage("output.png");

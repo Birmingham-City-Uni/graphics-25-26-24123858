@@ -12,7 +12,7 @@ As an example, below I have referenced assets used in the Labs.
 
 
 
-
+## Models/asstes used:
 
 https://sketchfab.com/3d-models/button-from-portal-2-original-f1c4fcfc668a4577a30f4d1c8ed3ca9a
 
@@ -26,3 +26,10 @@ https://sketchfab.com/3d-models/door-from-portal-2-original-e0fa18a874dc4a5bbc39
 
 https://sketchfab.com/3d-models/sektor-interior-solutions-forte-perforated-fa0bc2bee60242059615e7b16d9ab145
 
+
+
+## Rasteriser resources:
+
+
+
+## Raytracer resources:
