@@ -19,7 +19,6 @@ Eigen::Vector3f reflect(const Eigen::Vector3f& incoming, const Eigen::Vector3f& 
 //Phong specular term to find the intensity of specular reflection
 //Returns the Phong specular term for a given lighting direction, normal, view direction and specular exponent
 //All input vectors must be normalised unit vectors.
-//
 //<param name="incomingLightDir">Unit direction vector from light towards surface point.</param>
 //<param name="normal">Normal at surface point.</param>
 //<param name="viewDir">Direction unit vector from surface point towards viewing camera.</param>

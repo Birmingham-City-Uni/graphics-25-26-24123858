@@ -29,7 +29,7 @@ public:
 	//<returns>True if ambient, false otherwise</returns>
 	virtual Type getType() = 0;
 
-	//gGets a unit direction vector representing the incoming direction of the light
+	//gets a unit direction vector representing the incoming direction of the light
 	//source at a given surface point
 	//<param name="surfaceLocation"></param>
 	//<returns>Unit vector following direction of incoming light.</returns>
