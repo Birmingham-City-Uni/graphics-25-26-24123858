@@ -29,8 +29,6 @@ https://sketchfab.com/3d-models/sektor-interior-solutions-forte-perforated-fa0bc
 
 
 ## Rasteriser resources:
-https://learnopengl.com/Lighting/Lighting-maps
-
 https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/overview-rasterization-algorithm.html
 
 https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/perspective-correct-interpolation-vertex-attributes.html
@@ -47,6 +45,14 @@ https://learn.microsoft.com/en-us/windows/win32/direct3d9/alpha-blending
 
 https://learnopengl.com/Advanced-Lighting/Normal-Mapping
 
+https://shader-tutorial.dev/intermediates/normal-mapping/
+
 https://learnopengl.com/Lighting/Lighting-maps
+
+https://shader-tutorial.dev/intermediates/specular-mapping/
+
+https://learnopengl.com/Advanced-OpenGL/Blending
+
+https://learnopengl.com/Advanced-Lighting/Gamma-Correction
 
 ## Raytracer resources:
