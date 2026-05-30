@@ -1,26 +1,99 @@
-//TODO:
-//scene hpp for models and textures
-//add in all models and pos correctly
-//pos camera in correct location
-//normal mapping
-//shadow mapping
-//lighting- currently ambient and point
+//RASTERISER: FEATURES IMPLEMENTED
 
-//REMOVE CLIPPING- increase clipping range, leave z (depth) guard band clipping 
-//REMOVE TEXTURE FOR WALL, FLOOR 1 AND 2, ADD COLOUR PERAM
-//INCREASE LIGHTING
-//POSITION POINT LIGHT
-//POSITION MODELS 
-//POSITION CAMERA
+//1. Z buffering (depth testing)
+//A depth buffer was implemented to ensure objects are rendered in the correct order
+//based on their distance from the camera.Each pixel stores the closest depth value 
+//rendered so far, and any pixels that are further away are discarded.This prevents 
+//objects from incorrectly drawing over each other and ensures proper hidden surface 
+//removal throughout the scene.The depth test is performed per - pixel during triangle
+//rasterisation using perspective - correct depth values.
 
-//METALLIC/SHININESS/SPECULAR ON WALL, FLOOR 1 AND 2, OBJECTS- MAKE INTO A UNIFORMS TO CONFIGURE PER MODEL
-//MIRROR/GLASS REFLECTION
-//EMISSIVE/BLOOM LIGHTING
+//2. Texture mapping
+//Texture mapping was implemented to apply PNG textures to 3D models using UV 
+//coordinates imported from the mesh.UV coordinates are perspective - correctly 
+//interpolated across each triangle and used to sample the texture for every pixel.
+//Gamma correction is also applied, with textures converted from sRGB into linear 
+//colour space before lighting calculations and converted back before being written 
+//to the final image.Objects without textures can also be rendered using a flat 
+//colour material.
 
-//HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
+//3. Multiple light types (polymorphism)
+//The renderer supports multiple light types through an object - oriented lighting 
+//system.A common Light base class is used, with Ambient, Point, Directional and 
+//Spot lights implemented as derived classes.Each light calculates its own direction 
+//and intensity behaviour, allowing different types of lights to be used together 
+//within the same scene.The final scene uses both ambient and spotlight lighting.
+
+//4. Blinn-Phong and Phong shading
+//Both Phong and Blinn - Phong shading models were implemented to simulate realistic 
+//lighting on object surfaces.Diffuse lighting is calculated using Lambert's cosine 
+//law, while specular highlights can be generated using either the traditional 
+//Phong reflection model or the more efficient Blinn-Phong halfway vector approach. 
+//The active shading model can be selected through the renderer settings, with 
+//Blinn-Phong being used in the final scene.
+
+//5. OOP/c++ paradigms
+//The renderer was developed using object - oriented programming principles to keep 
+//the code modular and easier to maintain.The Scene class manages rendering, objects, 
+//lights, cameras and buffers, while SceneObject stores mesh, texture and material 
+//information for individual assets.Inheritance and polymorphism are used throughout 
+//the lighting system, and smart pointers are used to manage memory automatically 
+//without manual deletion.
+
+//6. Backface culling
+//Implemented to avoid rendering triangles that face away 
+//from the camera.
+//Triangles with negative signed screen-space area are skipped before
+//rasterisation, avoiding rendering of rear-facing geometry.
+
+//7. Perspective correct interpolation
+//Perspective - correct interpolation is used when calculating UV coordinates, 
+//world positions and surface normals across triangles.This prevents the distortion 
+//and texture warping that occurs with simple screen - space interpolation and 
+//ensures attributes remain accurate regardless of viewing angle or depth.
+
+//8. Alpha blending/translucency (glass obj)
+//A transparency system was implemented to support the frosted glass panel within 
+//the scene.The glass texture acts as an opacity mask, where darker areas become 
+//more transparent and lighter areas remain visible.Transparent pixels are blended 
+//with the existing framebuffer colour using alpha blending, allowing geometry behind 
+//the glass to remain visible while maintaining the appearance of a translucent surface.
+//Opaque objects are rendered first, followed by transparent objects to ensure correct 
+//blending results.
+
+//9. Normal mapping
+//Normal mapping was implemented to add additional surface detail without increasing 
+//mesh complexity.Normal maps store per - pixel surface directions which are 
+//transformed from tangent space into world space using a TBN matrix generated for 
+//each triangle.These modified normals are then used during lighting calculations, 
+//allowing small bumps, grooves and surface details to affect both diffuse and specular 
+//lighting even though the underlying geometry remains unchanged.
+
+//10. Specular/metallic Mapping
+//Specular mapping was implemented to vary shininess across a model on a per - pixel 
+//basis.The renderer samples a specular texture and uses its brightness to control the 
+//strength and sharpness of specular highlights.This allows different parts of the same 
+//object to appear glossy, metallic or matte, producing more realistic material
+//responses than using a single specular value across the entire surface.
+
+//11. Emissive mapping (cube and sign)
+//Emissive mapping was implemented to allow selected areas of a texture to appear 
+//self illuminated.Emissive textures are sampled independently of the scene lighting 
+//and added directly to the final shaded result.This allows objects such as the cube 
+//panels, sign, button and door elements to appear as though they are glowing, even 
+//when no light source is directly affecting them.The intensity of the effect can be 
+//adjusted through a configurable emissive strength value.
+//Stores the colour and intensity of light that this surface
+//emits by itself, completely independent of any light sources in the scene.
+//black pixels = no emission (normal shading), coloured/bright pixels = glowing.
+//this is how game engines make neon signs, glowing screens, LEDs etc look lit up
 
 
-//This define is necessary to get the M_PI constant.
+
+
+
+
+//this define is necessary to get the M_PI constant
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -31,11 +104,10 @@
 
 
 //projection matrix helper
-//Builds a perspective projection matrix from field-of-view, aspect ratio,
-//and near/far clip distances. Kept as a free function since it's
-//a one-off calculation rather than something belonging to a class.
-
-Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f * M_PI / 180.f, float zFar = 10.f, float zNear = 0.1f)
+//builds a perspective projection matrix from field of view, aspect ratio,
+//and near/far clip distances
+//kept as a free function since its a oneoff calculation rather than something belonging to a class
+Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.0f * M_PI / 180.0f, float zFar = 10.0f, float zNear = 0.1f)
 {
     float vertFov = horzFov * float(height) / width;
     Eigen::Matrix4f projection;
@@ -52,86 +124,82 @@ int main()
 {
     const int width = 1920, height = 1080;
 
-
     //camera and projection setup 
-    //Build the camera-to-world matrix (where the camera is in the world
-    //and what direction it's pointing). Invert it to get world-to-camera.
+    //build the camera to world matrix (where the camera is in the world
+    //and what direction its pointing)
+    // invert it to get world to camera
     //float zNear = 0.1f;
-    //float zFar = 100.f;
-    Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(7.0f, 0.7f, -9.0f))* //(3.43438f, 1.24049f, -7.13643f));
+    //float zFar = 100.0f;
+    Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(7.0f, 0.7f, -9.0f))* 
     rotateYMatrix(-35 * M_PI / 180);
-    rotateXMatrix(-10* M_PI / 180);
+    //rotateXMatrix(-10* M_PI / 180);
 
     Eigen::Vector3f camWorldPos = (cameraToWorld * Eigen::Vector4f(0, 0, 0, 1)).block<3, 1>(0, 0);
     Eigen::Matrix4f worldToCamera = cameraToWorld.inverse();
-    Eigen::Matrix4f projection = projectionMatrix(height, width, 70.f * M_PI / 180.f, 100.f, 0.1f); //zFar, zNear //zFar=100 zNear=0.1 uncomment from above
+    Eigen::Matrix4f projection = projectionMatrix(height, width, 70.0f * M_PI / 180.0f, 100.0f, 0.1f); //zFar, zNear //zFar=100 zNear=0.1 uncomment from above
 
 
-    //CREATE THE SCENE
+    //create the scene
 
-    //The Scene constructor sets up the image buffer, depth buffer,
+    //the Scene constructor sets up the image buffer, depth buffer,
     //and stores the camera/projection matrices ready for rendering
-
     Scene scene(width, height, worldToCamera, projection, camWorldPos, ShadingMode::BLINN_PHONG);
 
 
-    //lights- ambient nd point
-
-    //Lights are added via addLight() using unique_ptr for ownership.
-    //The Light base class uses polymorphism: can add any type
-    //of light (Ambient, Point, Directional, Spot) to the same list
+    //lights: ambient and point
+    //lights are added via addLight() using unique_ptr for ownership
+    //the light base class uses polymorphism: can add any type of light (Ambient, Point, Directional, Spot) to the same list
     //SpotLight arguments: intensity, world pos, direction it points, cone angle (radians)
-    scene.addLight(std::make_unique<AmbientLight>(Eigen::Vector3f(0.2f, 0.2f, 0.2f)));
-    //scene.addLight(std::make_unique<PointLight>(8.f * Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(-5.0f, 4.0f, 5.0f))); 
-    scene.addLight(std::make_unique<SpotLight>(12.f * Eigen::Vector3f(1.f, 1.f, 1.f), Eigen::Vector3f(-0.0f, -1.0f, -2.2f), Eigen::Vector3f(15.f, -2.f, -10.f).normalized(), M_PI / 3.f));                                   
-    //intensity, position, direction, cone half-angle (45 degrees) //HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
+    scene.addLight(std::make_unique<AmbientLight>(Eigen::Vector3f(0.5f, 0.5f, 0.5f)));
+    //scene.addLight(std::make_unique<PointLight>(8.0f * Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(-5.0f, 4.0f, 5.0f))); 
+    scene.addLight(std::make_unique<SpotLight>(12.0f * Eigen::Vector3f(1.5f, 1.5f, 1.5f), Eigen::Vector3f(-0.0f, -1.0f, -2.2f), Eigen::Vector3f(15.0f, -2.0f, -10.0f).normalized(), M_PI / 3.0f));                                   
+    //intensity, position, direction, cone half-angle (45 degrees) 
+    //pos= HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
    
 
-    //ADD SCENE OBJECTS
+    //adding scene objects
 
     //SceneObject::loadFromFile() loads the mesh + texture from file and packages them into a SceneObject
-    //Each object has its own transform (position, rotation, scale) and material (specular colour + shininess exponent)
-    //
-    //This replaces the old approach of separate Mesh variables, separate
-    //texture vectors, and separate transform matrices all in main().
+    //each object has its own transform (position, rotation, scale) and material (specular colour + shininess exponent)
+    //This replaces the old approach of separate Mesh variables, separate texture vectors, and separate transform matrices all in main()
 
-
-    //cube
+    //cube (has normal, specular, emissive maps)
     Eigen::Matrix4f transform1 =
-        translationMatrix(Eigen::Vector3f(2.5f, -0.3f, -3.0f)) *
+        translationMatrix(Eigen::Vector3f(2.6f, -0.3f, -3.15f)) *
         scaleMatrix(Eigen::Vector3f(0.45f, 0.45f, 0.45f));
-    /*rotateZMatrix(0.0f) *
-    rotateYMatrix(180* M_PI/180) *
-    rotateXMatrix(-90.0f* M_PI/180);*/
 
-    scene.addObject(SceneObject::loadFromFile
-    (
+    SceneObject cube = SceneObject::loadFromFile(
         "../models/cube.obj",
         "../models/cubeTex.png",
         transform1,
-        Eigen::Vector3f::Ones(), //specular colour: white
-        50.f                     //specular exponent: fairly shiny
-    ));
+        Eigen::Vector3f::Ones(),//specular colour: white
+        60.0f //specular exponent
+    );
+    cube.setNormalMap("../models/cubeNorm.png");  
+    cube.setSpecularMap("../models/cubeSpec.png");
+    cube.setEmissiveMap("../models/cubeEmis.png");
+    cube.emissiveStrength = 2.5f;
+    scene.addObject(cube);
+    
 
-
-    //button
+    //button (has normal, specular, emissive maps)
     Eigen::Matrix4f transform2 =
         translationMatrix(Eigen::Vector3f(2.2f, -1.0f, -3.0f)) *
         scaleMatrix(Eigen::Vector3f(0.7f, 0.7f, 0.7f));
-    /*rotateZMatrix(-3.16f) *
-    rotateYMatrix(0.0f) *
-    rotateXMatrix(90.0f * M_PI / 180);*/
-    //rotateYMatrix(M_PI + 0.5f); 
 
-    scene.addObject(SceneObject::loadFromFile
-    (
+    SceneObject button = SceneObject::loadFromFile(
         "../models/button.obj",
         "../models/buttonTex.png",
         transform2,
         Eigen::Vector3f::Ones(),
-        50.f
-    ));
-
+        60.0f
+    );
+    button.setNormalMap("../models/buttonNorm.png");
+    button.setSpecularMap("../models/buttonSpec.png");
+    button.setEmissiveMap("../models/buttonEmis.png");
+    button.emissiveStrength = 2.5f;
+    scene.addObject(button);
+    
 
     //floor
     Eigen::Matrix4f transform3 =
@@ -146,120 +214,118 @@ int main()
         Eigen::Vector3f(0.85f, 0.83f, 0.80f),  //offwhite
         transform3,
         Eigen::Vector3f::Ones(), 
-        50.f                     
+        50.0f                     
     ));
 
-    //glass
+
+    //glass (has transparency)
     Eigen::Matrix4f transform4 =
-        translationMatrix(Eigen::Vector3f(-1.2f, 0.8f, -1.2f)) *
+        translationMatrix(Eigen::Vector3f(-1.6f, 0.8f, -1.2f)) *
         scaleMatrix(Eigen::Vector3f(0.5f, 0.8f, 0.8f)) *
         rotateXMatrix(-3.0f * M_PI / 180);
-     /*   rotateZMatrix(0.0f) *
-        rotateYMatrix(45.0f * M_PI / 180) *
-        rotateXMatrix(45.0f * M_PI / 180);*/
 
-    scene.addObject(SceneObject::loadFromFile
+    scene.addObject(SceneObject::loadFromFileTransparent
     (
         "../models/glass.obj",
         "../models/glassTex.png",
         transform4,
+        0.65f, //transparency strength 0= clear 1= fully frosted
         Eigen::Vector3f::Ones(), 
-        50.f                     
+        50.0f                     
     ));
 
 
-    ////gun
+    //gun (has normal and specular map)
     Eigen::Matrix4f transform5 =
         translationMatrix(Eigen::Vector3f(5.5f, -0.8f, -4.8f)) *
         scaleMatrix(Eigen::Vector3f(2.0f, 2.0f, 2.0f)) *
         rotateYMatrix(-55 * M_PI / 180);
-    /*rotateZMatrix(0.0f) *
-    rotateYMatrix(180* M_PI/180) *
-    rotateXMatrix(-90.0f* M_PI/180);*/
 
-    scene.addObject(SceneObject::loadFromFile
-    (
+    SceneObject gun = SceneObject::loadFromFile(
         "../models/gun.obj",
         "../models/gunTex.png",
         transform5,
-        Eigen::Vector3f::Ones(), 
-        50.f                     
-    ));
+        Eigen::Vector3f::Ones(),
+        80.0f
+    );
+    gun.setNormalMap("../models/gunNorm.png");
+    gun.setSpecularMap("../models/gunSpec.png");
+    scene.addObject(gun);
+    
 
     //floor2
     Eigen::Matrix4f transform6 =
         translationMatrix(Eigen::Vector3f(1.7f, -2.4f, 2.9f)) *
         scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
-    /*rotateZMatrix(0.0f) *
-    rotateYMatrix(180* M_PI/180) *
-    rotateXMatrix(-90.0f* M_PI/180);*/
 
     scene.addObject(SceneObject::loadFromFileColour
     (
         "../models/floor2.obj",
-        Eigen::Vector3f(0.18f, 0.18f, 0.18f),  //dark grey
+        Eigen::Vector3f(0.18f, 0.18f, 0.18f), //dark grey
         transform6,
         Eigen::Vector3f::Ones(), 
-        50.f                     
+        50.0f                     
     ));
 
 
-    //door
+    //door (has emissive map)
     Eigen::Matrix4f transform7 =
         translationMatrix(Eigen::Vector3f(3.3f, -1.5f, 2.6f)) *
         scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f)) *
         rotateYMatrix(M_PI);
-    /*rotateZMatrix(0.0f) *
-    rotateYMatrix(180* M_PI/180) *
-    rotateXMatrix(-90.0f* M_PI/180);*/
 
-    scene.addObject(SceneObject::loadFromFile
+    SceneObject door = SceneObject::loadFromFile
     (
         "../models/door.obj",
         "../models/doorTex.png",
         transform7,
         Eigen::Vector3f::Ones(), 
-        50.f                     
-    ));
+        50.0f                     
+    );
+    door.setEmissiveMap("../models/doorEmis.png"); 
+    door.emissiveStrength = 2.0f; 
+    scene.addObject(door);
+
 
     //wall
     Eigen::Matrix4f transform8 =
-        translationMatrix(Eigen::Vector3f(5.0f, -1.7f, 5.0f)) *
+        translationMatrix(Eigen::Vector3f(5.0f, -1.9f, 4.1f)) *
         scaleMatrix(Eigen::Vector3f(1.0f, 1.0f, 1.0f));
-    /*rotateZMatrix(0.0f) *
-    rotateYMatrix(180* M_PI/180) *
-    rotateXMatrix(-90.0f* M_PI/180);*/
 
     scene.addObject(SceneObject::loadFromFile
     (
         "../models/wall.obj",
-        "../models/wall2Tex.png",
-       // Eigen::Vector3f(0.10f, 0.10f, 0.10f),  //darker grey
+        "../models/wallTex.png",
+       // Eigen::Vector3f(0.10f, 0.10f, 0.10f), //darker grey
         transform8,
         Eigen::Vector3f::Ones(), 
-        50.f                    
+        50.0f                    
     ));
 
-    //sign
+    //sign (has emissive map)
     Eigen::Matrix4f transform9 =
-        translationMatrix(Eigen::Vector3f(3.8f, -0.1f, 0.8f)) *
+        translationMatrix(Eigen::Vector3f(3.8f, 0.05f, 0.8f)) *
         scaleMatrix(Eigen::Vector3f(0.3f, 0.3f, 0.3f)) *
         rotateYMatrix(M_PI);
 
-    scene.addObject(SceneObject::loadFromFile
-    (
+    SceneObject sign = SceneObject::loadFromFile(
         "../models/sign.obj",
         "../models/signTex.png",
         transform9,
         Eigen::Vector3f::Ones(),
-        50.f
-    ));
+        50.0f
+    );
+    sign.setEmissiveMap("../models/signEmis.png"); 
+    sign.emissiveStrength = 2.5f;
+    scene.addObject(sign);
 
 
-
-    ////lights1  //HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
+    //following models included but not used as positioning the scene exactly as blender and ref image was difficult to get
+    //right in a one dimensional render of image
+    
+    ////lights1  
     //Eigen::Matrix4f transform10 =
-    //    translationMatrix(Eigen::Vector3f(0.0f, 0.0f, -8.0f)) *
+    //    translationMatrix(Eigen::Vector3f(6.0f, -0.5f, -5.0f)) *
     //    scaleMatrix(Eigen::Vector3f(0.3f, 0.3f, 0.3f));
     //    //rotateXMatrix(180 * M_PI / 180);
 
@@ -269,7 +335,7 @@ int main()
     //    "../models/lights1Tex.png",
     //    transform10,
     //    Eigen::Vector3f::Ones(),
-    //    50.f
+    //    50.0f
     //));
 
     ////lights2
@@ -284,7 +350,7 @@ int main()
     //    "../models/lights2Tex.png",
     //    transform11,
     //    Eigen::Vector3f::Ones(),
-    //    50.f
+    //    50.0f
     //));
 
     ////lights3
@@ -299,13 +365,11 @@ int main()
     //    "../models/lights3Tex.png",
     //    transform12,
     //    Eigen::Vector3f::Ones(),
-    //    50.f
+    //    50.0f
     //));
 
 
-
-
-    //RENDER AND SAVE
+    //render and save
 
     //render() loops over all objects and draws each one using the
     //shared lights, camera and projection: all encapsulated in Scene
@@ -318,477 +382,3 @@ int main()
 }
 
 
-
-
-
-
-
-
-
-
-
-
-//// This define is necessary to get the M_PI constant.
-//#define _USE_MATH_DEFINES
-//#include <math.h>
-//
-//#include <iostream>
-//#include <lodepng.h>
-//#include "Image.hpp"
-//#include "LinAlg.hpp"
-//#include "Light.hpp"
-//#include "Mesh.hpp"
-//#include "Shading.hpp"
-//#include "Scene.hpp"
-//
-//
-//
-//enum ShadingMode {
-//	PHONG,
-//	BLINN_PHONG
-//};
-//
-//
-//
-//struct Triangle {
-//	std::array<Eigen::Vector3f, 3> screen; //coordinates of the triangle in screen space
-//	std::array<Eigen::Vector3f, 3> verts; //vertices of the triangle in world space
-//	std::array<Eigen::Vector3f, 3> cam; //vertices of the triangle in camera space
-//	std::array<Eigen::Vector3f, 3> norms; //normals of the triangle corners in world space
-//	std::array<Eigen::Vector2f, 3> texs; //texture coordinates of the triangle corners
-//};
-//
-//
-//Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f * M_PI / 180.f, float zFar = 10.f, float zNear = 0.1f)
-//{
-//	float vertFov = horzFov * float(height) / width;
-//	Eigen::Matrix4f projection;
-//	projection <<
-//		1.0f / tanf(0.5f * horzFov), 0, 0, 0,
-//		0, 1.0f / tanf(0.5f * vertFov), 0, 0,
-//		0, 0, zFar / (zFar - zNear), -zFar * zNear / (zFar - zNear),
-//		0, 0, 1, 0;
-//	return projection;
-//}
-//
-//
-////for adding model scaling
-//Eigen::Matrix4f scaleMatrix(Eigen::Vector3f s)
-//{
-//	Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
-//	m(0, 0) = s.x();
-//	m(1, 1) = s.y();
-//	m(2, 2) = s.z();
-//	return m;
-//}
-//
-//void findScreenBoundingBox(const Triangle& t, int width, int height, int& minX, int& minY, int& maxX, int& maxY)
-//{
-//	//find a bounding box around the triangle
-//	minX = std::min(std::min(t.screen[0].x(), t.screen[1].x()), t.screen[2].x());
-//	minY = std::min(std::min(t.screen[0].y(), t.screen[1].y()), t.screen[2].y());
-//	maxX = std::max(std::max(t.screen[0].x(), t.screen[1].x()), t.screen[2].x());
-//	maxY = std::max(std::max(t.screen[0].y(), t.screen[1].y()), t.screen[2].y());
-//
-//	//constrain it to keep within image
-//	minX = std::min(std::max(minX, 0), width - 1);
-//	maxX = std::min(std::max(maxX, 0), width - 1);
-//	minY = std::min(std::max(minY, 0), height - 1);
-//	maxY = std::min(std::max(maxY, 0), height - 1);
-//}
-//
-//
-//void drawTriangle(std::vector<uint8_t>& image, int width, int height,
-//	std::vector<float>& zBuffer,
-//	const Triangle& t,
-//	const std::vector<std::unique_ptr<Light>>& lights,
-//	//const Eigen::Vector3f& albedo, const Eigen::Vector3f& specularColor,
-//	const std::vector<uint8_t>& texture, int texWidth, int texHeight,
-//	const Eigen::Vector3f& specularColor,
-//	float specularExponent,
-//	ShadingMode shadingMode,
-//	const Eigen::Vector3f& camWorldPos)
-//{
-//	int minX, minY, maxX, maxY;
-//	findScreenBoundingBox(t, width, height, minX, minY, maxX, maxY);
-//
-//	Eigen::Vector2f edge1 = v2(t.screen[2] - t.screen[0]);
-//	Eigen::Vector2f edge2 = v2(t.screen[1] - t.screen[0]);
-//	float triangleArea = 0.5f * vec2Cross(edge2, edge1);
-//	if (triangleArea < 0) {
-//		return;
-//	}
-//
-//	for (int x = minX; x <= maxX; ++x)
-//		for (int y = minY; y <= maxY; ++y) {
-//			Eigen::Vector2f p(x, y);
-//
-//			//find subtriangle areas
-//			float a0 = 0.5f * fabsf(vec2Cross(v2(t.screen[1]) - v2(t.screen[2]), p - v2(t.screen[2])));
-//			float a1 = 0.5f * fabsf(vec2Cross(v2(t.screen[0]) - v2(t.screen[2]), p - v2(t.screen[2])));
-//			float a2 = 0.5f * fabsf(vec2Cross(v2(t.screen[0]) - v2(t.screen[1]), p - v2(t.screen[1])));
-//
-//			//find barycentrics
-//			float b0 = a0 / triangleArea;
-//			float b1 = a1 / triangleArea;
-//			float b2 = a2 / triangleArea;
-//
-//			//if outside triangle exit early
-//			float sum = b0 + b1 + b2;
-//			if (sum > 1.0001) {
-//				continue;
-//			}
-//
-//			//get the depths from the camera space position of the 3 corners
-//			//float depth0 = 0.f, depth1 = 0.f, depth2 = 0.f;
-//			float depth0 = -t.cam[0].z();
-//			float depth1 = -t.cam[1].z();
-//			float depth2 = -t.cam[2].z();
-//
-//			//work out the depth at the point P
-//			//float depthP = 0.f;
-//			float depthP = 1.0f / (b0 / depth0 + b1 / depth1 + b2 / depth2);
-//
-//			//interpolate to find the world-space position of this pixel (perspective-correct)
-//			//Eigen::Vector3f worldP = Eigen::Vector3f::Zero();
-//			Eigen::Vector3f worldP =
-//				(t.verts[0] * (b0 / depth0) +
-//					t.verts[1] * (b1 / depth1) +
-//					t.verts[2] * (b2 / depth2)) * depthP;
-//
-//			// Interpolate to find the normal of this pixel (perspective-correct)
-//			//Eigen::Vector3f normP = Eigen::Vector3f::Zero();
-//			Eigen::Vector3f normP =
-//				(t.norms[0] * (b0 / depth0) +
-//					t.norms[1] * (b1 / depth1) +
-//					t.norms[2] * (b2 / depth2)).normalized();
-//
-//
-//			//perspective-correct uv interpolation
-//			Eigen::Vector2f texP =
-//				(t.texs[0] * (b0 / depth0) +
-//					t.texs[1] * (b1 / depth1) +
-//					t.texs[2] * (b2 / depth2)) * depthP;
-//
-//			//convert to texture space
-//			int texX = texP.x() * (texWidth - 1);
-//			int texY = (1.0f - texP.y()) * (texHeight - 1);
-//
-//			//clamp
-//			texX = std::max(0, std::min(texX, texWidth - 1));
-//			texY = std::max(0, std::min(texY, texHeight - 1));
-//
-//			//sample texture
-//			Color texColor = getPixel(texture, texX, texY, texWidth, texHeight);
-//
-//			//convert to linear space (gamma correct)
-//			Eigen::Vector3f albedo(
-//				powf(texColor.r / 255.0f, 2.2f),
-//				powf(texColor.g / 255.0f, 2.2f),
-//				powf(texColor.b / 255.0f, 2.2f)
-//			);
-//
-//
-//			// Interpolate to find the correct clip-space depth (perspective-correct)
-//			//float depth = 0.f;
-//			float depth =
-//				(t.screen[0].z() * (b0 / depth0) +
-//					t.screen[1].z() * (b1 / depth1) +
-//					t.screen[2].z() * (b2 / depth2)) * depthP;
-//
-//			int depthIdx = static_cast<int>(p.x()) + static_cast<int>(p.y()) * width;
-//			if (depth > zBuffer[depthIdx]) continue;
-//			zBuffer[depthIdx] = depth;
-//
-//
-//			//work out colour at this position
-//			Eigen::Vector3f color = Eigen::Vector3f::Zero();
-//
-//			Eigen::Vector3f viewDir = (camWorldPos - worldP).normalized();
-//
-//			//iterate over lights and sum to find colour
-//			for (auto& light : lights) {
-//
-//				//work out the intensity of this light source at the point worldP
-//				Eigen::Vector3f lightIntensity = light->getIntensityAt(worldP);
-//
-//				//only need the following if the light isn't an ambient light
-//				if (light->getType() != Light::Type::AMBIENT) {
-//					Eigen::Vector3f incomingLightDir = light->getDirection(worldP);
-//
-//					float specularTerm;
-//					if (shadingMode == ShadingMode::PHONG) {
-//						specularTerm = phongSpecularTerm(incomingLightDir, normP, viewDir, specularExponent);
-//					}
-//					else {
-//						specularTerm = blinnPhongSpecularTerm(incomingLightDir, normP, viewDir, specularExponent);
-//					}
-//
-//					Eigen::Vector3f specularOut = specularColor * specularTerm;
-//					specularOut = coeffWiseMultiply(specularOut, lightIntensity);
-//
-//					//take the dot product of the normal with the light direction
-//					float dotProd = normP.dot(-incomingLightDir);
-//
-//					//don't want negative light so if dot product less than 0, set it to 0
-//					dotProd = std::max(dotProd, 0.0f);
-//
-//					//multiply the light intensity by the dot product
-//					Eigen::Vector3f diffuseOut = lightIntensity * dotProd;
-//					diffuseOut = coeffWiseMultiply(diffuseOut, albedo);
-//
-//					color += specularOut;
-//					color += diffuseOut;
-//					//color = (incomingLightDir + Eigen::Vector3f::Ones()) / 2;
-//				}
-//				else {
-//					//light is ambient- multiply light intensity with albedo
-//					color += coeffWiseMultiply(lightIntensity, albedo);
-//				}
-//			}
-//			//color = (worldP + Eigen::Vector3f::Ones()) / 2;
-//			//color = (viewDir + Eigen::Vector3f::Ones()) / 2;
-//			//color = (normP + Eigen::Vector3f::Ones()) / 2;
-//
-//
-//
-//
-//		//	// Convert it into an Eigen::Vector3f as an albedo
-//		//	// (Optional bonus task, if you checked out the slides on gamma correction:
-//		//	// gamma correct this colour, so the texture doesn't appear overly bright.
-//		//	// should you raise to the power 1/2.2, or 2.2?)
-//		//	//Eigen::Vector3f albedo = Eigen::Vector3f::Zero();
-//		//	// 
-//		//	// Convert to albedo (0–1 range)
-//		///*	Eigen::Vector3f albedo(
-//		//		texColor.r / 255.0f,
-//		//		texColor.g / 255.0f,
-//		//		texColor.b / 255.0f
-//		//	);*/
-//
-//		//	Eigen::Vector3f albedo(
-//		//		powf(texColor.r / 255.0f, 2.2f),
-//		//		powf(texColor.g / 255.0f, 2.2f),
-//		//		powf(texColor.b / 255.0f, 2.2f)
-//		//	);
-//
-//
-//			Color c;
-//			//gamma-correcting colours so the texture doesn't appear overly bright
-//			c.r = std::min(powf(color.x(), 1 / 2.2f), 1.0f) * 255;
-//			c.g = std::min(powf(color.y(), 1 / 2.2f), 1.0f) * 255;
-//			c.b = std::min(powf(color.z(), 1 / 2.2f), 1.0f) * 255;
-//
-//			c.a = 255;
-//
-//			setPixel(image, x, y, width, height, c);
-//		}
-//}
-//
-//
-//
-//void drawMesh(std::vector<unsigned char>& image,
-//	std::vector<float>& zBuffer,
-//	const Mesh& mesh,
-//	//const Eigen::Vector3f& albedo, const Eigen::Vector3f& specularColor,
-//	const std::vector<uint8_t>& texture, int texWidth, int texHeight,
-//	const Eigen::Vector3f& specularColor,
-//	float specularExponent,
-//	ShadingMode shadingMode,
-//	const Eigen::Vector3f& camWorldPos,
-//	const Eigen::Matrix4f& modelToWorld,
-//	const Eigen::Matrix4f& worldToCam,
-//	const Eigen::Matrix4f& camToClip,
-//	const std::vector<std::unique_ptr<Light>>& lights,
-//	int width, int height)
-//{
-//	for (int i = 0; i < mesh.vFaces.size(); ++i) {
-//		Eigen::Vector3f
-//			v0 = mesh.verts[mesh.vFaces[i][0]],
-//			v1 = mesh.verts[mesh.vFaces[i][1]],
-//			v2 = mesh.verts[mesh.vFaces[i][2]];
-//		Eigen::Vector3f
-//			n0 = mesh.norms[mesh.nFaces[i][0]],
-//			n1 = mesh.norms[mesh.nFaces[i][1]],
-//			n2 = mesh.norms[mesh.nFaces[i][2]];
-//
-//		Triangle t;
-//		t.verts[0] = (modelToWorld * vec3ToVec4(v0)).block<3, 1>(0, 0);
-//		t.verts[1] = (modelToWorld * vec3ToVec4(v1)).block<3, 1>(0, 0);
-//		t.verts[2] = (modelToWorld * vec3ToVec4(v2)).block<3, 1>(0, 0);
-//
-//		t.cam[0] = (worldToCam * modelToWorld * vec3ToVec4(v0)).block<3, 1>(0, 0);
-//		t.cam[1] = (worldToCam * modelToWorld * vec3ToVec4(v1)).block<3, 1>(0, 0);
-//		t.cam[2] = (worldToCam * modelToWorld * vec3ToVec4(v2)).block<3, 1>(0, 0);
-//
-//		//work out the clip space coordinates, by multiplying by worldToClip and doing the 
-//		//perspective divide
-//		Eigen::Vector4f vClip0 = camToClip * worldToCam * modelToWorld * vec3ToVec4(v0);
-//		vClip0 /= vClip0.w();
-//		Eigen::Vector4f vClip1 = camToClip * worldToCam * modelToWorld * vec3ToVec4(v1);
-//		vClip1 /= vClip1.w();
-//		Eigen::Vector4f vClip2 = camToClip * worldToCam * modelToWorld * vec3ToVec4(v2);
-//		vClip2 /= vClip2.w();
-//
-//		//work out the clip space coordinates, by multiplying by worldToClip and doing the 
-//		//perspective divide
-//		if (outsideClipBox(vClip0) || outsideClipBox(vClip1) || outsideClipBox(vClip2)) continue;
-//
-//		//work out the screen space coordinates based on the image height and width
-//		t.screen[0] = Eigen::Vector3f((vClip0.x() + 1.0f) * width / 2, (-vClip0.y() + 1.0f) * height / 2, vClip0.z());
-//		t.screen[1] = Eigen::Vector3f((vClip1.x() + 1.0f) * width / 2, (-vClip1.y() + 1.0f) * height / 2, vClip1.z());
-//		t.screen[2] = Eigen::Vector3f((vClip2.x() + 1.0f) * width / 2, (-vClip2.y() + 1.0f) * height / 2, vClip2.z());
-//
-//		//transform normals (using the inverse transpose of the upper 3x3 block)
-//		t.norms[0] = (modelToWorld.block<3, 3>(0, 0).inverse().transpose() * n0).normalized();
-//		t.norms[1] = (modelToWorld.block<3, 3>(0, 0).inverse().transpose() * n1).normalized();
-//		t.norms[2] = (modelToWorld.block<3, 3>(0, 0).inverse().transpose() * n2).normalized();
-//
-//		t.texs[0] = mesh.texs[mesh.tFaces[i][0]];
-//		t.texs[1] = mesh.texs[mesh.tFaces[i][1]];
-//		t.texs[2] = mesh.texs[mesh.tFaces[i][2]];
-//
-//		//drawTriangle(image, width, height, zBuffer, t, lights, albedo, specularColor, specularExponent, shadingMode, camWorldPos);
-//		drawTriangle(image, width, height, zBuffer, t, lights,
-//			texture, texWidth, texHeight,
-//			specularColor, specularExponent, shadingMode, camWorldPos);
-//	}
-//}
-//
-//int main()
-//{
-//	std::string outputFilename = "output.png";
-//
-//	const int width = 1920, height = 1080;
-//	const int nChannels = 4;
-//
-//	//set up an image buffer
-//	std::vector<uint8_t> imageBuffer(height*width*nChannels);
-//
-//	std::vector<float> zBuffer(height * width);
-//
-//	//initialise buffers
-//	Color black{ 0,0,0,255 };
-//	for (int r = 0; r < height; ++r)
-//		for (int c = 0; c < width; ++c) {
-//			setPixel(imageBuffer, c, r, width, height, black);
-//			zBuffer[r * width + c] = 1.0f;
-//		}
-//
-//	//camera and projection setup 
-//	//Eigen::Matrix4f projection = projectionMatrix(height, width);
-//	//Eigen::Matrix4f projection = projectionMatrix(height, width, 70.f * M_PI / 180.f, 100.f, 0.1f);
-//	float zNear = 0.1f;
-//	float zFar = 100.f;
-//	Eigen::Matrix4f projection = projectionMatrix(height, width, 70.f * M_PI / 180.f, zFar, zNear);
-//	
-//
-//	//need to change camera pos when all models have been added and placed
-//	//Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 5.0f, -5.0f)) * rotateXMatrix(0.4f);
-//	Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.0f, 0.0f, -10.0f)); // (3.43438f, 1.24049f, -7.13643f));
-//		//rotateYMatrix(-26 * M_PI / 180)*
-//		//rotateXMatrix((90 - 73)* M_PI / 180);
-//
-//	Eigen::Vector3f camWorldPos = (cameraToWorld * Eigen::Vector4f(0, 0, 0, 1)).block<3, 1>(0, 0);
-//	Eigen::Matrix4f worldToCamera = cameraToWorld.inverse();
-//
-//	//lights- anbient and point
-//	std::vector<std::unique_ptr<Light>> lights;
-//	lights.emplace_back(new AmbientLight(Eigen::Vector3f(0.1f, 0.1f, 0.1f))); //(0.3f, 0.3f, 0.3f)
-//	lights.emplace_back(new PointLight(2.f * Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(0.0f, 3.0f, 0.0f))); //add rotation to pointlight to point to camera not downwards
-//
-//
-//	//load and draw scene 
-//	//Mesh myMesh = loadMeshFile("../models/model.obj");
-//	//Eigen::Matrix4f meshTransform = translationMatrix(Eigen::Vector3f(0.f, 0.f, 5.f)) * rotateYMatrix(M_PI);;
-//	
-//	Mesh cube = loadMeshFile("../models/cube.obj");
-//	Eigen::Matrix4f transform1 =
-//		translationMatrix(Eigen::Vector3f(1.0f, -0.3f, -2.5f)) *
-//		scaleMatrix(Eigen::Vector3f(0.5f, 0.5f, 0.5f));
-//		/*rotateZMatrix(0.0f) *
-//		rotateYMatrix(180* M_PI/180) *
-//		rotateXMatrix(-90.0f* M_PI/180);*/
-//
-//	Mesh button = loadMeshFile("../models/button.obj");
-//	Eigen::Matrix4f transform2 =
-//		translationMatrix(Eigen::Vector3f(1.0f, -6.1f, -2.0f))*
-//		scaleMatrix(Eigen::Vector3f(2.0f, 2.0f, 2.0f));
-//		/*rotateZMatrix(-3.16f) *
-//		rotateYMatrix(0.0f) *
-//		rotateXMatrix(90.0f * M_PI / 180);*/
-//		//rotateYMatrix(M_PI + 0.5f); 
-//
-//	Mesh model3 = loadMeshFile("../models/model3.obj");
-//	Eigen::Matrix4f transform3 =
-//		translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) * //move down 
-//		scaleMatrix(Eigen::Vector3f(1.5f, 1.5f, 1.5f)) * //smaller
-//		//rotateYMatrix(M_PI);
-//		rotateYMatrix(0.0f);
-//	
-//
-//	//std::vector<uint8_t> texture;
-//	//unsigned int texWidth, texHeight;
-//	//lodepng::decode(texture, texWidth, texHeight, "../models/texture.png");
-//
-//	std::vector<uint8_t> texture1, texture2, texture3;
-//	unsigned int texWidth1, texHeight1;
-//	unsigned int texWidth2, texHeight2;
-//	unsigned int texWidth3, texHeight3;
-//
-//	lodepng::decode(texture1, texWidth1, texHeight1, "../models/cubeTex.png");
-//	lodepng::decode(texture2, texWidth2, texHeight2, "../models/buttonTex.png");
-//	lodepng::decode(texture3, texWidth3, texHeight3, "../models/texture3.png");
-//
-//
-//	//drawMesh(imageBuffer, zBuffer, myMesh,
-//	//	texture, texWidth, texHeight,
-//	//	Eigen::Vector3f::Ones(),
-//	//	50.f,
-//	//	ShadingMode::BLINN_PHONG,
-//	//	camWorldPos,
-//	//	meshTransform, worldToCamera, projection,
-//	//	lights, width, height);
-//
-//	//model1
-//	drawMesh(imageBuffer, zBuffer, cube,
-//		texture1, texWidth1, texHeight1,
-//		Eigen::Vector3f::Ones(), //specular colour
-//		50.f, //specular exponent- how shiny
-//		ShadingMode::BLINN_PHONG,
-//		camWorldPos,
-//		transform1, worldToCamera, projection,
-//		lights, width, height);
-//
-//	//model2
-//	drawMesh(imageBuffer, zBuffer, button,
-//		texture2, texWidth2, texHeight2,
-//		Eigen::Vector3f::Ones(),
-//		50.f,
-//		ShadingMode::BLINN_PHONG,
-//		camWorldPos,
-//		transform2, worldToCamera, projection,
-//		lights, width, height);
-//
-//	//model3
-//	drawMesh(imageBuffer, zBuffer, model3,
-//		texture3, texWidth3, texHeight3,
-//		Eigen::Vector3f::Ones(),
-//		50.f,
-//		ShadingMode::BLINN_PHONG,
-//		camWorldPos,
-//		transform3, worldToCamera, projection,
-//		lights, width, height);
-//
-//
-//
-//    //save the image
-//    int errorCode;
-//        errorCode = lodepng::encode(outputFilename, imageBuffer, width, height);
-//        if (errorCode) { //check the error code, in case an error occurred.
-//            std::cout << "lodepng error encoding image: " << lodepng_error_text(errorCode) << std::endl;
-//            return errorCode;
-//        }
-//
-//    return 0;
-//}

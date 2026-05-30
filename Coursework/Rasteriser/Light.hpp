@@ -3,10 +3,10 @@
 #include <vector>
 #include <fstream>
 
-/// <summary>
-/// Abstract class representing a light source.
-/// </summary>
-class Light {
+
+//sbstract class representing a light source
+class Light 
+{
 protected:
 	Eigen::Vector3f _intensity;
 public:
@@ -17,27 +17,22 @@ public:
 
 	enum Type { POINT, SPOT, DIRECTIONAL, AMBIENT };
 
-	/// <summary>
-	/// Returns the intensity of this light source at a given location in world space.
-	/// </summary>
-	/// <param name="surfaceLocation"></param>
-	/// <returns>RGB intensity at the given location.</returns>
+	//returns the intensity of this light source at a given location in world space
+	//<param name="surfaceLocation"></param>
+	//<returns>RGB intensity at the given location.</returns>
 	virtual Eigen::Vector3f getIntensityAt(const Eigen::Vector3f& surfaceLocation) = 0;
 
-	/// <summary>
-	/// Check if the current light source is an ambient light.
-	/// For ambient lights, getDirection should not be called (ambient lights have no
-	/// world space location or direction).
-	/// </summary>
-	/// <returns>True if ambient, false otherwise</returns>
+
+	//Check if the current light source is an ambient light
+	//For ambient lights, getDirection should not be called (ambient lights have no
+	//world space location or direction)
+	//<returns>True if ambient, false otherwise</returns>
 	virtual Type getType() = 0;
 
-	/// <summary>
-	/// Gets a unit direction vector representing the incoming direction of the light
-	/// source at a given surface point.
-	/// </summary>
-	/// <param name="surfaceLocation"></param>
-	/// <returns>Unit vector following direction of incoming light.</returns>
+	//gGets a unit direction vector representing the incoming direction of the light
+	//source at a given surface point
+	//<param name="surfaceLocation"></param>
+	//<returns>Unit vector following direction of incoming light.</returns>
 	virtual Eigen::Vector3f getDirection(const Eigen::Vector3f& surfaceLocation) = 0;
 
 	virtual Eigen::Vector3f getLightLocation() = 0;
@@ -49,11 +44,10 @@ public:
 
 };
 
-/// <summary>
-/// An ambient light is applied uniformly to all scene locations, having no direction
-/// or location.
-/// </summary>
-class AmbientLight : public Light {
+//an ambient light is applied uniformly to all scene locations, having no direction
+//or location
+class AmbientLight : public Light 
+{
 private:
 
 public:
@@ -74,22 +68,22 @@ public:
 
 	virtual Eigen::Vector3f getDirection(const Eigen::Vector3f& surfaceLocation) override
 	{
-		// Ambient lights do not have a direction, so throw an error!
+		//ambient lights do not have a direction, so throw an error!
 		throw std::runtime_error("ERROR: Ambient lights have no light direction.");
 	}
 
 	virtual Eigen::Vector3f getLightLocation() override
 	{
-		// Ambient lights do not have a location, so throw an error!
+		//ambient lights do not have a location, so throw an error!
 		throw std::runtime_error("ERROR: Ambient lights have no location.");
 	}
 };
 
-/// <summary>
-/// Directional lights have a fixed direction and uniformly illuminate all world points
-/// from that direction. They have no falloff (unlike point and spot lights).
-/// </summary>
-class DirectionalLight : public Light {
+//directional lights have a fixed direction and uniformly illuminate all world points
+//from that direction
+//they have no falloff (unlike point and spot lights)
+class DirectionalLight : public Light 
+{
 private:
 	Eigen::Vector3f _direction;
 
@@ -120,12 +114,11 @@ public:
 	}
 };
 
-/// <summary>
-/// Point lights have a location in the world, and their intensity falls off with the 
-/// inverse square law. Their direction is determined by the location of the surface
-/// relative to the light.
-/// </summary>
-class PointLight : public Light {
+//point lights have a location in the world, and their intensity falls off with the 
+//inverse square law
+//their direction is determined by the location of the surface relative to the light
+class PointLight : public Light 
+{
 private:
 	Eigen::Vector3f _location;
 
@@ -157,14 +150,14 @@ public:
 	}
 };
 
-/// <summary>
-/// Spot lights have a location in the world, and their intensity falls off with the 
-/// inverse square law, just like point lights. However they also point in a specified
-/// direction, and their intensity falls off as you move away from this direction.
-/// This spot light implementation has a hard edge, and intensity drops to zero if the angle
-/// between the surface direction and spot light direction is greater than _angle.
-/// </summary>
-class SpotLight : public Light {
+//spot lights have a location in the world, and their intensity falls off with the 
+//inverse square law, just like point lights
+//however they also point in a specified direction, and their intensity falls off as you move 
+//away from this direction
+//this spot light implementation has a hard edge, and intensity drops to zero if the angle
+//between the surface direction and spot light direction is greater than _angle
+class SpotLight : public Light 
+{
 private:
 	Eigen::Vector3f _location;
 	Eigen::Vector3f _direction;
