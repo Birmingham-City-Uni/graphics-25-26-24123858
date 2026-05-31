@@ -97,8 +97,8 @@ This is how game engines make neon signs/glowing screens/LEDs look lit up
 
 
 
-### Learning Resources and References
-See REFERENCES.md
+## Learning Resources and References
+See REFERENCES.md for rasteriser and raytracer learning and asset resources
 
 
 
