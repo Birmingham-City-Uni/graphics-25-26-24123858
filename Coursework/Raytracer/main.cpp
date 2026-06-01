@@ -1,3 +1,35 @@
+//RAYTRACER: FEATURES IMPLEMENTED
+
+//Gammma correction
+//converts linear light values to sRGB
+//need more info
+//need references
+
+//Additional light type: Spotlight
+//SpotLight.hpp created and added into scene, for final scene point light was used 
+//as it better matched reference image
+//need more info
+
+//Emissive lighting
+//EmissiveShader.hpp created and added to scene
+//need more info
+
+//Normal maps
+// 
+
+//Textured phong 
+// 
+
+//Specular maps
+// 
+
+//Soft shadows
+// 
+
+//Frosted mirror
+//
+
+
 #include <Eigen/Dense>
 #include <lodepng.h>
 #include <json/json.hpp>
@@ -11,11 +43,13 @@
 #include "Camera.hpp"
 #include "PointLight.hpp"
 #include "DirectionalLight.hpp"
+#include "SpotLight.hpp"
 #include "LambertianShader.hpp"
 #include "TexturedLambertianShader.hpp"
 #include "PhongShader.hpp"
 #include "MirrorShader.hpp"
 #include "TexCoordTestShader.hpp"
+#include "EmissiveShader.hpp"
 #include "Model.hpp"
 #include <fstream>
 
@@ -46,7 +80,10 @@ Eigen::Matrix4f makeScaleMatrix(float x, float y, float z) {
 	return s;
 }
 //uniform scale shorthand
-Eigen::Matrix4f makeScaleMatrix(float s) { return makeScaleMatrix(s, s, s); }
+Eigen::Matrix4f makeScaleMatrix(float s) 
+{ 
+	return makeScaleMatrix(s, s, s); 
+}
 
 
 int main(int argc, char* argv[]) {
@@ -86,38 +123,18 @@ int main(int argc, char* argv[]) {
 
 	// *** Load shaders and textures ***
 	
-	////scale matrix helper since GeomUtil didnt have one
-	//auto makeScale = [](float x, float y, float z) 
-	//	{
-	//	Eigen::Matrix4f s = Eigen::Matrix4f::Identity();
-	//	s(0, 0) = x; s(1, 1) = y; s(2, 2) = z;
-	//	return s;
-	//	};
-
-	//auto makeScaleU = [&makeScale](float s) 
-	//	{ 
-	//		return makeScale(s, s, s); 
-	//	};
-
 	//loading textures
-	/*auto loadTex = [](const std::string& path, std::vector<uint8_t>& data, unsigned int& w, unsigned int& h) 
-		{
-		unsigned int err = lodepng::decode(data, w, h, path);
-		if (err) throw std::runtime_error("Failed to load texture: " + path);
-		};*/
-
 	auto loadTex = [](const std::string& path, std::vector<uint8_t>& data, unsigned int& w, unsigned int& h)
 		{
 			unsigned int err = lodepng::decode(data, w, h, path);
-			if (err) throw std::runtime_error("Failed to load texture: " + path
-				+ " — " + lodepng_error_text(err));
+			if (err) throw std::runtime_error("Failed to load texture: " + path + " — " + lodepng_error_text(err));
 		};
 
 	//std::vector<uint8_t> spotTexture;
 	//unsigned int width, height;
 	//lodepng::decode(spotTexture, width, height, "../models/spot.png");
 	
-	unsigned int tw, th; //now texture width and height, reused for every texture load without declaring a new pair each time
+	unsigned int tw, th; //new texture width and height, reused for every texture load without declaring a new pair each time
 
 	std::vector<uint8_t> cubeTex, buttonTex, gunTex, glassTex, doorTex, wallTex, signTex;
 	
@@ -137,12 +154,11 @@ int main(int argc, char* argv[]) {
 	//TexturedLambertianShader spotShader(&spotTexture, width, height);
 	MirrorShader mirrorShader;
 	//TexCoordTestShader texCoordTestShader;
-
 	TexturedLambertianShader cubeShader(&cubeTex, cubeW, cubeH);
 	TexturedLambertianShader buttonShader(&buttonTex, buttonW, buttonH);
 	//PhongShader gunShader(Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(1, 1, 1), 80.f); //gun has spec map in rasteriser, for now using Phong with white base
 	TexturedLambertianShader gunShader(&gunTex, gunW, gunH);
-	//TexturedLambertianShader glassShader(&glassTex, glassW, glassH); //uses mirror
+	//TexturedLambertianShader glassShader(&glassTex, glassW, glassH); //uses mirror shader
 	TexturedLambertianShader doorShader(&doorTex, doorW, doorH);
 	TexturedLambertianShader wallShader(&wallTex, wallW, wallH);
 	TexturedLambertianShader signShader(&signTex, signW, signH);
@@ -150,6 +166,19 @@ int main(int argc, char* argv[]) {
 	LambertianShader floor1Shader(Eigen::Vector3f(0.85f, 0.83f, 0.80f)); //whiteish
 	LambertianShader floor2Shader(Eigen::Vector3f(0.18f, 0.18f, 0.18f)); //dark grey
 
+
+	std::vector<uint8_t> cubeEmisTex, buttonEmisTex, doorEmisTex, signEmisTex;
+
+	loadTex("../models/cubeEmis.png", cubeEmisTex, tw, th); unsigned int cubeEmisW = tw, cubeEmisH = th;
+	loadTex("../models/buttonEmis.png", buttonEmisTex, tw, th); unsigned int buttonEmisW = tw, buttonEmisH = th;
+	loadTex("../models/doorEmis.png", doorEmisTex, tw, th); unsigned int doorEmisW = tw, doorEmisH = th;
+	loadTex("../models/signEmis.png", signEmisTex, tw, th); unsigned int signEmisW = tw, signEmisH = th;
+
+	// Emissive shaders (wrap the existing texture shaders)
+	EmissiveShader cubeEmissiveShader(&cubeShader, &cubeEmisTex, cubeEmisW, cubeEmisH, 2.5f);
+	EmissiveShader buttonEmissiveShader(&buttonShader, &buttonEmisTex, buttonEmisW, buttonEmisH, 2.5f);
+	EmissiveShader doorEmissiveShader(&doorShader, &doorEmisTex, doorEmisW, doorEmisH, 2.0f);
+	EmissiveShader signEmissiveShader(&signShader, &signEmisTex, signEmisW, signEmisH, 2.5f);
 
 	// *** Set up scene ***
 	Scene scene;
@@ -165,145 +194,8 @@ int main(int argc, char* argv[]) {
 	//scene.renderables.push_back(std::make_shared<Mesh>(&spotShader, &spotModel));
 	//scene.renderables.back()->modelToWorld(rotateY(M_PI / 4.0f));
 
-	//// cube
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(2.6f, -0.3f, -3.15f))
-	//		* makeScaleU(0.45f);
-	//	Model m("../models/cube.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &cubeShader, 4, t));
-	//}
 
-	//// button
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(2.2f, -1.0f, -3.0f))
-	//		* makeScaleU(0.7f);
-	//	Model m("../models/button.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &buttonShader, 4, t));
-	//}
-
-	//// floor1 (off-white)
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f));
-	//	Model m("../models/floor1.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &floor1Shader, 4, t));
-	//}
-
-	//// glass panel — using MirrorShader as a frosted mirror upgrade (see notes below)
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(-1.6f, 0.8f, -1.2f))
-	//		* makeScale(0.5f, 0.8f, 0.8f)
-	//		* rotateX(-3.0f * M_PI / 180.f);
-	//	Model m("../models/glass.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &mirrorShader, 4, t));
-	//}
-
-	//// gun
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(5.5f, -0.8f, -4.8f))
-	//		* makeScaleU(2.0f)
-	//		* rotateY(-55.f * M_PI / 180.f);
-	//	Model m("../models/gun.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &gunShader, 4, t));
-	//}
-
-	//// floor2 (dark grey)
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(1.7f, -2.4f, 2.9f));
-	//	Model m("../models/floor2.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &floor2Shader, 4, t));
-	//}
-
-	//// door
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(3.3f, -1.5f, 2.6f))
-	//		* rotateY(M_PI);
-	//	Model m("../models/door.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &doorShader, 4, t));
-	//}
-
-	//// wall
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(5.0f, -1.9f, 4.1f));
-	//	Model m("../models/wall.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &wallShader, 4, t));
-	//}
-
-	//// sign
-	//{
-	//	Eigen::Matrix4f t = makeTranslationMatrix(Eigen::Vector3f(3.8f, 0.05f, 0.8f))
-	//		* makeScaleU(0.3f)
-	//		* rotateY(M_PI);
-	//	Model m("../models/sign.obj");
-	//	scene.renderables.push_back(std::make_shared<BVHNode>(m, &signShader, 4, t));
-	//}
-
-
-
-
-
-
-
-	//auto addModel = [&](const char* objPath, Shader* shader,
-	//	const Eigen::Matrix4f& t, const char* label)
-	//	{
-	//		Model m(objPath);
-	//		if (!m.hasNormals()) {
-	//			std::cerr << "WARNING: " << label
-	//				<< " has no normals - will likely crash. Re-export with normals.\n";
-	//		}
-	//		scene.renderables.push_back(std::make_shared<BVHNode>(m, shader, 4, t));
-	//	};
-
-	//addModel("../models/cube.obj", &cubeShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(2.6f, -0.3f, -3.15f))* makeScaleMatrix(0.45f),
-	//	"cube");
-
-	//addModel("../models/button.obj", &buttonShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(2.2f, -1.0f, -3.0f))* makeScaleMatrix(0.7f),
-	//	"button");
-
-	//addModel("../models/floor1.obj", &floor1Shader,
-	//	makeTranslationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f)),
-	//	"floor1");
-
-	//// Glass panel uses MirrorShader — real reflections instead of alpha blending.
-	//// This is Mirror Reflections as an advanced feature.
-	//addModel("../models/glass.obj", &mirrorShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(-1.6f, 0.8f, -1.2f))
-	//	* makeScaleMatrix(0.5f, 0.8f, 0.8f)
-	//	* rotateX(-3.0f * M_PI / 180.f),
-	//	"glass");
-
-	//addModel("../models/gun.obj", &gunShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(5.5f, -0.8f, -4.8f))
-	//	* makeScaleMatrix(2.0f)
-	//	* rotateY(-55.f * M_PI / 180.f),
-	//	"gun");
-
-	//addModel("../models/floor2.obj", &floor2Shader,
-	//	makeTranslationMatrix(Eigen::Vector3f(1.7f, -2.4f, 2.9f)),
-	//	"floor2");
-
-	//addModel("../models/door.obj", &doorShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(3.3f, -1.5f, 2.6f))* rotateY(M_PI),
-	//	"door");
-
-	//addModel("../models/wall.obj", &wallShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(5.0f, -1.9f, 4.1f)),
-	//	"wall");
-
-	//addModel("../models/sign.obj", &signShader,
-	//	makeTranslationMatrix(Eigen::Vector3f(3.8f, 0.05f, 0.8f))
-	//	* makeScaleMatrix(0.3f)
-	//	* rotateY(M_PI),
-	//	"sign");
-
-
-
-
-
-	// Declare all models at main scope so they stay alive for the full program
-// (BVHNode may store a pointer/reference to the Model internally)
+	//declaring all models at main so they stay alive
 	Model cubeModel("../models/cube.obj");
 	Model buttonModel("../models/button.obj");
 	Model floor1Model("../models/floor1.obj");
@@ -314,8 +206,9 @@ int main(int argc, char* argv[]) {
 	Model wallModel("../models/wall.obj");
 	Model signModel("../models/sign.obj");
 
-	// Check for missing normals before adding anything
-	auto checkNormals = [](const Model& m, const char* name) {
+	//check for missing normals before adding anything due to previous error loading models
+	auto checkNormals = [](const Model& m, const char* name) 
+		{
 		if (!m.hasNormals())
 			std::cerr << "WARNING: " << name << " has no normals - re-export with normals!\n";
 		};
@@ -330,17 +223,17 @@ int main(int argc, char* argv[]) {
 	checkNormals(wallModel, "wall");
 	checkNormals(signModel, "sign");
 
-	// Now add to scene — models are guaranteed to stay alive
+	//add to scene 
 	//pos= HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
 	scene.renderables.push_back(std::make_shared<BVHNode>(
-		cubeModel, &cubeShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(2.7f, -0.8f, -1.8f))* 
+		cubeModel, &cubeEmissiveShader, 4,
+		makeTranslationMatrix(Eigen::Vector3f(2.6f, -0.9f, -1.7f))* 
 		makeScaleMatrix(0.45f)
 	));
 
 	scene.renderables.push_back(std::make_shared<BVHNode>(
-		buttonModel, &buttonShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(2.3f, -1.5f, -1.7f))* 
+		buttonModel, &buttonEmissiveShader, 4,
+		makeTranslationMatrix(Eigen::Vector3f(2.3f, -1.6f, -1.7f))* 
 		makeScaleMatrix(0.7f)
 	));
 
@@ -369,8 +262,9 @@ int main(int argc, char* argv[]) {
 	));
 
 	scene.renderables.push_back(std::make_shared<BVHNode>(
-		doorModel, &doorShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(3.0f, -1.5f, 4.0f))* 
+		doorModel, &doorEmissiveShader, 4,
+		makeTranslationMatrix(Eigen::Vector3f(2.5f, -2.0f, 5.5f))* 
+		makeScaleMatrix(1.5f)*
 		rotateY(M_PI)
 	));
 
@@ -380,7 +274,7 @@ int main(int argc, char* argv[]) {
 	));
 
 	scene.renderables.push_back(std::make_shared<BVHNode>(
-		signModel, &signShader, 4,
+		signModel, &signEmissiveShader, 4,
 		makeTranslationMatrix(Eigen::Vector3f(2.0f, 0.05f, 7.2f))
 		* makeScaleMatrix(0.8f)
 		* rotateY(145.0f * M_PI / 180.0f)
@@ -388,22 +282,16 @@ int main(int argc, char* argv[]) {
 
 
 
-
-
-
-
-
-
 	// *** Add lights to scene ***
-	Eigen::Vector3f ambientLight(0.5f, 0.5f, 0.5f);
+	Eigen::Vector3f ambientLight(0.3f, 0.3f, 0.3f);
 
 	std::vector<std::unique_ptr<Light>> lightSources;
-	//lightSources.push_back(std::make_unique<PointLight>(Eigen::Vector3f(-1.f, 3.f, -1.f), 3.f * Eigen::Vector3f(1.f, 1.f, 1.f)));
-	//elevated point light so it shines down
-	lightSources.push_back(std::make_unique<PointLight>(Eigen::Vector3f(0.f, 4.f, -2.2f), 18.f * Eigen::Vector3f(1.f, 1.f, 1.f)));
+	lightSources.push_back(std::make_unique<PointLight>(Eigen::Vector3f(0.0f, 4.0f, -2.2f), 18.0f * Eigen::Vector3f(1.0f, 1.0f, 1.0f)));
 	//lightSources.push_back(std::make_unique<DirectionalLight>(Eigen::Vector3f(0.f, -1.f, 1.f), .5f * Eigen::Vector3f(1.f, 1.f, 1.f)));
-		
-
+	
+	//spotlight- implemented but not used for final scene as point matched ref image more  
+	//lightSources.push_back(std::make_unique<SpotLight>(Eigen::Vector3f(0.f, -1.f, -2.2f), 18.f * Eigen::Vector3f(1.5f, 1.5f, 1.5f), Eigen::Vector3f(15.f, -2.f, -10.f).normalized(), M_PI / 3.f));
+	//position, colour * intensity, direction it points, cone half-angle (60 deg)
 
 	// *** Render the scene ***
 
@@ -442,10 +330,14 @@ int main(int argc, char* argv[]) {
 					lightSources, ambientLight,
 					0, config["maxBounces"]);
 
-				color.x() = std::min(color.x(), 1.f);
-				color.y() = std::min(color.y(), 1.f);
-				color.z() = std::min(color.z(), 1.f);
+				//color.x() = std::min(color.x(), 1.f);
+				//color.y() = std::min(color.y(), 1.f);
+				//color.z() = std::min(color.z(), 1.f);
 
+				//gamma correction to convert linear light values to sRGB 
+				color.x() = std::min(powf(color.x(), 1.f / 2.2f), 1.f);
+				color.y() = std::min(powf(color.y(), 1.f / 2.2f), 1.f);
+				color.z() = std::min(powf(color.z(), 1.f / 2.2f), 1.f);
 
 				int line = (pixHeight - scanlines[y]) - 1;
 				outImage[(x + line * pixWidth) * nChannels + 0] = color.x() * 255;

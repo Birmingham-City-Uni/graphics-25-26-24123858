@@ -56,3 +56,17 @@ https://learnopengl.com/Advanced-OpenGL/Blending
 https://learnopengl.com/Advanced-Lighting/Gamma-Correction
 
 ## Raytracer resources:
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-lighting/introduction-to-lighting.html
+
+https://learnopengl.com/Lighting/Basic-Lighting
+
+https://learnopengl.com/Lighting/Light-casters
+
+https://www.opengl.org/archives/resources/code/samples/sig99/advanced99/notes/node48.html
+
+https://sibras.github.io/OpenGL4-Tutorials/docs/Tutorials/06-Tutorial6/
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/procedural-texturing.html
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-texturing/introduction-to-texturing-basic-implementation.html
