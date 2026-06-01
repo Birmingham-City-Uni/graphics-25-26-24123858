@@ -23,12 +23,15 @@ public:
     {
     }
 
-    Eigen::Vector3f getColor(
+    Eigen::Vector3f getColor
+    (
         const HitInfo& hitInfo,
         const Renderable* scene,
         const std::vector<std::unique_ptr<Light>>& lights,
         const Eigen::Vector3f& ambientLight,
-        int depth, int maxDepth) const override
+        int depth, int maxDepth
+    ) 
+        const override
     {
         //get base shaded colour
         //calc normal shaded colour first using underlying material shader
@@ -63,14 +66,15 @@ public:
         int idx = (ex + ey * emissiveW_) * 4;
         //convert emissive tex values from srgb into linear space
         //to combine correctly with the lighting calcs
-        Eigen::Vector3f emissive(
+        Eigen::Vector3f emissive
+        (
             powf((*emissiveTex_)[idx + 0] / 255.f, 2.2f),
             powf((*emissiveTex_)[idx + 1] / 255.f, 2.2f),
             powf((*emissiveTex_)[idx + 2] / 255.f, 2.2f)
         );
  
         //emissive added directly to final colour
-        //emissive materials generate their own light and independent of other lightin in scene
+        //emissive materials generate own light and is independent of other lighting in scene
         return color + emissive * emissiveStrength_;
     }
 

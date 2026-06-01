@@ -138,6 +138,61 @@ public:
 			}
 			info.texCoords = (1 - (u + v)) * vt0 + u * vt1 + v * vt2;
 
+
+			//added for normal mapping
+			Eigen::Vector3f edge1 = v1World - v0World;
+			Eigen::Vector3f edge2 = v2World - v0World;
+
+			Eigen::Vector2f deltaUV1 = vt1 - vt0;
+			Eigen::Vector2f deltaUV2 = vt2 - vt0;
+
+
+			//calculate tangent space vectors needed for normal mapping (tangent space normal mapping)
+			//tangent points in direction of increasing u tex coords
+			//bitangent points in the direction of increasing v tex coords
+			//together with interpolated surface normal these vectors
+			//form tbn matrix which is used to transform normals (sampled from
+			//normal maps) into world space
+
+			//for the tangent space basis using the relationship
+			//between changes in 3d pos and changes in uv space
+		    //detUV (determinant): uv differences form a 2×2 matrix
+			//tells whether uv coords span a valid area
+
+			float detUV =
+				deltaUV1.x() * deltaUV2.y()
+				- deltaUV2.x() * deltaUV1.y();
+
+			if (fabs(detUV) > 1e-8f)
+			{
+				float uvFactor = 1.0f / detUV;
+
+				//tangent vector that corresponds to u texture axis
+				Eigen::Vector3f tangent =
+					uvFactor *
+					(deltaUV2.y() * edge1 -
+						deltaUV1.y() * edge2);
+
+				//bitangent vector that corresponds to v texture axis
+				Eigen::Vector3f bitangent =
+					uvFactor *
+					(-deltaUV2.x() * edge1 +
+						deltaUV1.x() * edge2);
+
+				//basis vectors stored in HitInfo
+				//can be used later by shader when constructing tbn matrix
+				info.tangent = tangent.normalized();
+				info.bitangent = bitangent.normalized();
+
+			}
+
+			else
+			{
+				info.tangent = Eigen::Vector3f::Zero();
+				info.bitangent = Eigen::Vector3f::Zero();
+			}
+
+
 			closestT = t;
 		}
 

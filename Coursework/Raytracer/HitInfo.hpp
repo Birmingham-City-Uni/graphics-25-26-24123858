@@ -13,6 +13,10 @@ struct HitInfo
 		normal, // Normal vector of the object at the hit location.
 		location, // World-space location of hit point.
 		inDirection; // Incoming ray direction.
+
+	Eigen::Vector3f tangent; //for normal mapping tbn
+	Eigen::Vector3f bitangent;
+
 	Eigen::Vector2f texCoords; // Texture coordinates at the hit location.
 	const Shader* shader; // Shader associated with the hit object.
 };

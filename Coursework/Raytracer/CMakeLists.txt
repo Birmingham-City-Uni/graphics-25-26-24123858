@@ -34,6 +34,7 @@ set(SHADERS_SOURCE_GROUP
     MirrorShader.hpp
     TexCoordTestShader.hpp
     EmissiveShader.hpp
+    TexturedPhongShader.hpp
 )
 
 source_group("Header Files\\Entities" FILES ${ENTITIES_SOURCE_GROUP})

@@ -3,30 +3,47 @@
 //Gammma correction
 //converts linear light values to sRGB
 //need more info
-//need references
 
 //Additional light type: Spotlight
 //SpotLight.hpp created and added into scene, for final scene point light was used 
 //as it better matched reference image
 //need more info
 
-//Emissive lighting
-//EmissiveShader.hpp created and added to scene
-//need more info
+//Emissive lighting (cube, button, door, sign)
+//EmissiveShader.hpp created and added to scene to support emissive texture png files
+//to allow parts of a texture to appear illuminated independently of scene lighting 
+//Custom EmissiveShader was developed using a decorator style approach,
+//wrapping an existing material shader and adding an emissive texture pass
+//Emissive texture values are sampled using the interpolated UV coordinates
+//converted from srgb into linear colour space, then added directly to the final shaded result
 
-//Normal maps
-// 
+//Textured phong shading (cube, button, gun) using Blinn-Phong
+//TexturedPhongShader used to combine texture mapping with Blinn-Phong lighting
+//Shader supports normal maps and specular maps
+//Surface colour is sampled from an albedo (diffuse) texture, diffuse
+//lighting is calculated using Lamberts cosine law, specular highlights are
+//generated using the BlinnPhong half vector
 
-//Textured phong 
-// 
+//Normal maping (cube, button, gun)
+//Implemented to add surface detail without increasing mesh complexity
+//Project was extended to calculate tangent and bitangent vectors for each 
+//triangle from its geometry and UV coordinates
+//Vectors are stored in HitInfo and with the interpolated surface normal form TBN
+//(tangent, bitangent, normal) 
+//Normals sampled from the normal map are transformed from tangent space into world space 
+//using the TBN matrix and used during lighting calculations
+//This then allows surface detail to influence diffuse and specular lighting with no modification to mesh
 
-//Specular maps
-// 
-
-//Soft shadows
-// 
+//Specular maps(cube, button, gun)
+//Allow different areas of a model to have varying reflection across the surface on a perpixel basis
+//Brightness of the specular texture is sampled and used to influence the strength and sharpness of 
+//Blinn-Phong specular highlights
+//Allowing different parts of a model to appear sniny/matte 
 
 //Frosted mirror
+//
+
+//Soft shadows
 //
 
 
@@ -51,6 +68,7 @@
 #include "TexCoordTestShader.hpp"
 #include "EmissiveShader.hpp"
 #include "Model.hpp"
+#include "TexturedPhongShader.hpp"
 #include <fstream>
 
 /// <summary>
@@ -109,7 +127,7 @@ int main(int argc, char* argv[]) {
 		Eigen::Vector3f(-0.574f, 0.0f, 0.819f), //rotateY(-35deg) applied to (0,0,1)
 		Eigen::Vector3f(0.f, 1.f, 0.f),
 		pixWidth, pixHeight,
-		70.f  // same fov as rasteriser
+		70.f //same fov as rasteriser
 	);
 
 
@@ -123,7 +141,7 @@ int main(int argc, char* argv[]) {
 
 	// *** Load shaders and textures ***
 	
-	//loading textures
+	//loading textures (albedo, normal, specular, emissive texture maps)
 	auto loadTex = [](const std::string& path, std::vector<uint8_t>& data, unsigned int& w, unsigned int& h)
 		{
 			unsigned int err = lodepng::decode(data, w, h, path);
@@ -154,10 +172,10 @@ int main(int argc, char* argv[]) {
 	//TexturedLambertianShader spotShader(&spotTexture, width, height);
 	MirrorShader mirrorShader;
 	//TexCoordTestShader texCoordTestShader;
-	TexturedLambertianShader cubeShader(&cubeTex, cubeW, cubeH);
-	TexturedLambertianShader buttonShader(&buttonTex, buttonW, buttonH);
+	//TexturedLambertianShader cubeShader(&cubeTex, cubeW, cubeH);
+	//TexturedLambertianShader buttonShader(&buttonTex, buttonW, buttonH);
 	//PhongShader gunShader(Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(1, 1, 1), 80.f); //gun has spec map in rasteriser, for now using Phong with white base
-	TexturedLambertianShader gunShader(&gunTex, gunW, gunH);
+	//TexturedLambertianShader gunShader(&gunTex, gunW, gunH);
 	//TexturedLambertianShader glassShader(&glassTex, glassW, glassH); //uses mirror shader
 	TexturedLambertianShader doorShader(&doorTex, doorW, doorH);
 	TexturedLambertianShader wallShader(&wallTex, wallW, wallH);
@@ -167,6 +185,38 @@ int main(int argc, char* argv[]) {
 	LambertianShader floor2Shader(Eigen::Vector3f(0.18f, 0.18f, 0.18f)); //dark grey
 
 
+	//Load normal and spec maps
+	//normal maps store perpixel surface directions that are used to simulate detail
+	//specular maps control how reflective parts of a surface appear
+	//white areas on map= reflective 
+	//darker areas= more matte/not reflective
+	std::vector<uint8_t> cubeNormTex, cubeSpecTex, buttonNormTex, buttonSpecTex, gunNormTex, gunSpecTex;
+
+	loadTex("../models/cubeNorm.png", cubeNormTex, tw, th); unsigned int cubeNormW = tw, cubeNormH = th;
+	loadTex("../models/cubeSpec.png", cubeSpecTex, tw, th); unsigned int cubeSpecW = tw, cubeSpecH = th;
+	loadTex("../models/buttonNorm.png", buttonNormTex, tw, th); unsigned int buttonNormW = tw, buttonNormH = th;
+	loadTex("../models/buttonSpec.png", buttonSpecTex, tw, th); unsigned int buttonSpecW = tw, buttonSpecH = th;
+	loadTex("../models/gunNorm.png", gunNormTex, tw, th); unsigned int gunNormW = tw, gunNormH = th;
+	loadTex("../models/gunSpec.png", gunSpecTex, tw, th); unsigned int gunSpecW = tw, gunSpecH = th;
+
+	//create TexturedPhongShader materials
+	//these combine texture mapping with BlinnPhong lighting
+	//and support both normal maps and spec maps
+	TexturedPhongShader cubePhongShader(&cubeTex, cubeW, cubeH, 60.f);
+	cubePhongShader.setNormalMap(&cubeNormTex, cubeNormW, cubeNormH);
+	cubePhongShader.setSpecularMap(&cubeSpecTex, cubeSpecW, cubeSpecH);
+
+	TexturedPhongShader buttonPhongShader(&buttonTex, buttonW, buttonH, 60.f);
+	buttonPhongShader.setNormalMap(&buttonNormTex, buttonNormW, buttonNormH);
+	buttonPhongShader.setSpecularMap(&buttonSpecTex, buttonSpecW, buttonSpecH);
+
+	TexturedPhongShader gunPhongShader(&gunTex, gunW, gunH, 80.f);
+	gunPhongShader.setNormalMap(&gunNormTex, gunNormW, gunNormH);
+	gunPhongShader.setSpecularMap(&gunSpecTex, gunSpecW, gunSpecH);
+
+	//emissive tex
+	//bright parts of image= self illuminated areas
+	//these contribute/add light independently of scene illumination and lighting
 	std::vector<uint8_t> cubeEmisTex, buttonEmisTex, doorEmisTex, signEmisTex;
 
 	loadTex("../models/cubeEmis.png", cubeEmisTex, tw, th); unsigned int cubeEmisW = tw, cubeEmisH = th;
@@ -174,11 +224,13 @@ int main(int argc, char* argv[]) {
 	loadTex("../models/doorEmis.png", doorEmisTex, tw, th); unsigned int doorEmisW = tw, doorEmisH = th;
 	loadTex("../models/signEmis.png", signEmisTex, tw, th); unsigned int signEmisW = tw, signEmisH = th;
 
-	// Emissive shaders (wrap the existing texture shaders)
-	EmissiveShader cubeEmissiveShader(&cubeShader, &cubeEmisTex, cubeEmisW, cubeEmisH, 2.5f);
-	EmissiveShader buttonEmissiveShader(&buttonShader, &buttonEmisTex, buttonEmisW, buttonEmisH, 2.5f);
+	//emissive shaders (wrap the existing texture shaders)
+	//emissive tex is sampled separately and added to the final shaded colour to create glowing parts on models
+	EmissiveShader cubeEmissiveShader(&cubePhongShader, &cubeEmisTex, cubeEmisW, cubeEmisH, 2.5f);
+	EmissiveShader buttonEmissiveShader(&buttonPhongShader, &buttonEmisTex, buttonEmisW, buttonEmisH, 2.5f);
 	EmissiveShader doorEmissiveShader(&doorShader, &doorEmisTex, doorEmisW, doorEmisH, 2.0f);
 	EmissiveShader signEmissiveShader(&signShader, &signEmisTex, signEmisW, signEmisH, 2.5f);
+
 
 	// *** Set up scene ***
 	Scene scene;
@@ -206,11 +258,11 @@ int main(int argc, char* argv[]) {
 	Model wallModel("../models/wall.obj");
 	Model signModel("../models/sign.obj");
 
-	//check for missing normals before adding anything due to previous error loading models
+	//check for missing normals before adding anything due to a previous error loading models
 	auto checkNormals = [](const Model& m, const char* name) 
 		{
-		if (!m.hasNormals())
-			std::cerr << "WARNING: " << name << " has no normals - re-export with normals!\n";
+			if (!m.hasNormals())
+				std::cerr << "WARNING: " << name << " has no normals - re-export with normals!\n";
 		};
 
 	checkNormals(cubeModel, "cube");
@@ -225,60 +277,69 @@ int main(int argc, char* argv[]) {
 
 	//add to scene 
 	//pos= HORIZONTAL/LR, VERTICAL/HEIGHT, DEPTH
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		cubeModel, &cubeEmissiveShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(2.6f, -0.9f, -1.7f))* 
-		makeScaleMatrix(0.45f)
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			cubeModel, &cubeEmissiveShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(2.6f, -1.1f, -1.7f))* 
+			makeScaleMatrix(0.45f)
+		));
+	
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			buttonModel, &buttonEmissiveShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(2.3f, -1.8f, -1.7f))* 
+			makeScaleMatrix(0.7f)
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		buttonModel, &buttonEmissiveShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(2.3f, -1.6f, -1.7f))* 
-		makeScaleMatrix(0.7f)
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			floor1Model, &floor1Shader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f))
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		floor1Model, &floor1Shader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(0.0f, -2.0f, 0.0f))
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			glassModel, &mirrorShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(-1.6f, 0.8f, -1.2f))
+			* makeScaleMatrix(0.5f, 0.8f, 0.8f)
+			* rotateX(-3.0f * M_PI / 180.f)
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		glassModel, &mirrorShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(-1.6f, 0.8f, -1.2f))
-		* makeScaleMatrix(0.5f, 0.8f, 0.8f)
-		* rotateX(-3.0f * M_PI / 180.f)
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			gunModel, &gunPhongShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(6.8f, -0.5f, -4.8f))
+			* makeScaleMatrix(2.0f)
+			* rotateY(-55.f * M_PI / 180.f)
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		gunModel, &gunShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(6.8f, -0.5f, -4.8f))
-		* makeScaleMatrix(2.0f)
-		* rotateY(-55.f * M_PI / 180.f)
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			floor2Model, &floor2Shader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(1.7f, -2.4f, 2.9f))
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		floor2Model, &floor2Shader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(1.7f, -2.4f, 2.9f))
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			doorModel, &doorEmissiveShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(2.5f, -2.0f, 5.5f))* 
+			makeScaleMatrix(1.5f)*
+			rotateY(M_PI)
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		doorModel, &doorEmissiveShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(2.5f, -2.0f, 5.5f))* 
-		makeScaleMatrix(1.5f)*
-		rotateY(M_PI)
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			wallModel, &wallShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(5.0f, -1.9f, 4.1f))
+		));
 
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		wallModel, &wallShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(5.0f, -1.9f, 4.1f))
-	));
-
-	scene.renderables.push_back(std::make_shared<BVHNode>(
-		signModel, &signEmissiveShader, 4,
-		makeTranslationMatrix(Eigen::Vector3f(2.0f, 0.05f, 7.2f))
-		* makeScaleMatrix(0.8f)
-		* rotateY(145.0f * M_PI / 180.0f)
-	));
+	scene.renderables.push_back(std::make_shared<BVHNode>
+		(
+			signModel, &signEmissiveShader, 4,
+			makeTranslationMatrix(Eigen::Vector3f(2.0f, 0.05f, 7.2f))
+			* makeScaleMatrix(0.8f)
+			* rotateY(145.0f * M_PI / 180.0f)
+		));
 
 
 
@@ -289,7 +350,7 @@ int main(int argc, char* argv[]) {
 	lightSources.push_back(std::make_unique<PointLight>(Eigen::Vector3f(0.0f, 4.0f, -2.2f), 18.0f * Eigen::Vector3f(1.0f, 1.0f, 1.0f)));
 	//lightSources.push_back(std::make_unique<DirectionalLight>(Eigen::Vector3f(0.f, -1.f, 1.f), .5f * Eigen::Vector3f(1.f, 1.f, 1.f)));
 	
-	//spotlight- implemented but not used for final scene as point matched ref image more  
+	//spotlight: implemented but not used for final scene as point light matched ref image more accurately
 	//lightSources.push_back(std::make_unique<SpotLight>(Eigen::Vector3f(0.f, -1.f, -2.2f), 18.f * Eigen::Vector3f(1.5f, 1.5f, 1.5f), Eigen::Vector3f(15.f, -2.f, -10.f).normalized(), M_PI / 3.f));
 	//position, colour * intensity, direction it points, cone half-angle (60 deg)
 
@@ -300,7 +361,8 @@ int main(int argc, char* argv[]) {
 	std::vector<unsigned int> scanlines(pixHeight);
 	for (int i = 0; i < pixHeight; ++i) scanlines[i] = i;
 
-	if (config["shuffleScanlines"]) {
+	if (config["shuffleScanlines"]) 
+	{
 		std::random_device rd;
 		std::mt19937 g(rd());
 		std::shuffle(scanlines.begin(), scanlines.end(), g);
@@ -315,8 +377,10 @@ int main(int argc, char* argv[]) {
 
 
 	#pragma omp parallel for
-	for (int y = 0; y < pixHeight; ++y) {
-		for (int x = 0; x < pixWidth; ++x) {
+	for (int y = 0; y < pixHeight; ++y) 
+	{
+		for (int x = 0; x < pixWidth; ++x) 
+		{
 			Ray ray = cam.getRay(x, scanlines[y]);
 			HitInfo hitInfo;
 			if (scene.intersect(ray, 1e-6f, 1e6f, hitInfo, VISIBLE_BITMASK)) {
@@ -325,6 +389,7 @@ int main(int argc, char* argv[]) {
 					std::cout << "NULL SHADER!" << std::endl;
 					continue;
 				}
+
 				Eigen::Vector3f color = hitInfo.shader->getColor(
 					hitInfo, &scene,
 					lightSources, ambientLight,
@@ -334,10 +399,14 @@ int main(int argc, char* argv[]) {
 				//color.y() = std::min(color.y(), 1.f);
 				//color.z() = std::min(color.z(), 1.f);
 
-				//gamma correction to convert linear light values to sRGB 
-				color.x() = std::min(powf(color.x(), 1.f / 2.2f), 1.f);
-				color.y() = std::min(powf(color.y(), 1.f / 2.2f), 1.f);
-				color.z() = std::min(powf(color.z(), 1.f / 2.2f), 1.f);
+				//gamma correction (with clamp for negative values) to convert linear light values to srgb 
+				//color.x() = std::min(powf(color.x(), 1.f / 2.2f), 1.f);
+				//color.y() = std::min(powf(color.y(), 1.f / 2.2f), 1.f);
+				//color.z() = std::min(powf(color.z(), 1.f / 2.2f), 1.f);
+				//with clamp
+				color.x() = std::min(powf(std::max(color.x(), 0.f), 1.f / 2.2f), 1.f);
+				color.y() = std::min(powf(std::max(color.y(), 0.f), 1.f / 2.2f), 1.f);
+				color.z() = std::min(powf(std::max(color.z(), 0.f), 1.f / 2.2f), 1.f);
 
 				int line = (pixHeight - scanlines[y]) - 1;
 				outImage[(x + line * pixWidth) * nChannels + 0] = color.x() * 255;
@@ -345,7 +414,8 @@ int main(int argc, char* argv[]) {
 				outImage[(x + line * pixWidth) * nChannels + 2] = color.z() * 255;
 				outImage[(x + line * pixWidth) * nChannels + 3] = 255;
 			}
-			else {
+			else 
+			{
 				int line = (pixHeight - scanlines[y]) - 1;
 				outImage[(x + line * pixWidth) * nChannels + 0] = 0;
 				outImage[(x + line * pixWidth) * nChannels + 1] = 0;
@@ -353,6 +423,7 @@ int main(int argc, char* argv[]) {
 				outImage[(x + line * pixWidth) * nChannels + 3] = 255;
 			}
 		}
+
 		if (omp_get_thread_num() == omp_get_num_threads()-1) {
 			std::clog << "\rScanlines remaining: " << (pixHeight - y) << ' ' << std::flush;
 		}
@@ -366,7 +437,8 @@ int main(int argc, char* argv[]) {
 	// *** Save the output image ***
 	int errorCode;
 	errorCode = lodepng::encode(config["outputFilename"], outImage, pixWidth, pixHeight);
-	if (errorCode) { // check the error code, in case an error occurred.
+	if (errorCode) 
+	{   //check the error code, in case an error occurred
 		std::cout << "lodepng error encoding image: " << lodepng_error_text(errorCode) << std::endl;
 		return errorCode;
 	}
