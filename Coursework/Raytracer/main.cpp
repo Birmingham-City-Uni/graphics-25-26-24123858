@@ -1,13 +1,24 @@
 //RAYTRACER: FEATURES IMPLEMENTED
 
-//Gammma correction
-//converts linear light values to sRGB
-//need more info
+//Gamma correction
+//Linear colour values produced by the ray tracer are converted to sRGB before
+//being written to the output image
+//Each colour channel is raised to the power of 1/2.2 
+//This prevents the final render from appearing too dark or having incorrect
+//brightness compared to how the image would appear on a monitor
+//Negative values are clamped to zero before gamma correction to prevent
+//invalid results when applying the power function
 
 //Additional light type: Spotlight
-//SpotLight.hpp created and added into scene, for final scene point light was used 
-//as it better matched reference image
-//need more info
+//SpotLight.hpp created as a new light class 
+//The spotlight emits light within a cone defined by a direction vector and
+//cone halfangle
+//Surface points outside the cone receive no illumination while points inside
+//the cone are lit using point light style distance attenuation
+//Shadow rays are cast to determine whether a point is occluded before applying
+//lighting contributions
+//The spotlight was implemented and tested within the scene, however a point
+//light was used for the final render as it more closely matched the reference image
 
 //Emissive lighting (cube, button, door, sign)
 //EmissiveShader.hpp created and added to scene to support emissive texture png files
@@ -40,11 +51,11 @@
 //Blinn-Phong specular highlights
 //Allowing different parts of a model to appear sniny/matte 
 
-//Frosted mirror
-//
-
-//Soft shadows
-//
+//Frosted mirror shading (glass)
+//FrostedMirrorShader implemented to combine reflective and diffuse material 
+//A grayscale texture is sampled using the interpolated uv coords to control blending
+//between mirror reflection and Lambertian diffuse shading (per pixel basis)
+//Diffuse frosted uses Lamberts cosine law to simulate light scattering across surface
 
 
 #include <Eigen/Dense>
@@ -69,6 +80,7 @@
 #include "EmissiveShader.hpp"
 #include "Model.hpp"
 #include "TexturedPhongShader.hpp"
+#include "FrostedMirrorShader.hpp"
 #include <fstream>
 
 /// <summary>
@@ -124,7 +136,7 @@ int main(int argc, char* argv[]) {
 	//set up the same as rasteriser, using same transforms for cam, lights and models to position everything
 	Camera cam(
 		Eigen::Vector3f(7.0f, 0.7f, -7.0f),
-		Eigen::Vector3f(-0.574f, 0.0f, 0.819f), //rotateY(-35deg) applied to (0,0,1)
+		Eigen::Vector3f(-0.574f, 0.0f, 0.819f), 
 		Eigen::Vector3f(0.f, 1.f, 0.f),
 		pixWidth, pixHeight,
 		70.f //same fov as rasteriser
@@ -231,6 +243,8 @@ int main(int argc, char* argv[]) {
 	EmissiveShader doorEmissiveShader(&doorShader, &doorEmisTex, doorEmisW, doorEmisH, 2.0f);
 	EmissiveShader signEmissiveShader(&signShader, &signEmisTex, signEmisW, signEmisH, 2.5f);
 
+	FrostedMirrorShader frostMirrorShader(&glassTex, glassW, glassH, Eigen::Vector3f(0.88f, 0.92f, 0.95f)); //blue/white colour
+	
 
 	// *** Set up scene ***
 	Scene scene;
@@ -287,7 +301,7 @@ int main(int argc, char* argv[]) {
 	scene.renderables.push_back(std::make_shared<BVHNode>
 		(
 			buttonModel, &buttonEmissiveShader, 4,
-			makeTranslationMatrix(Eigen::Vector3f(2.3f, -1.8f, -1.7f))* 
+			makeTranslationMatrix(Eigen::Vector3f(2.3f, -1.8f, -1.6f))* 
 			makeScaleMatrix(0.7f)
 		));
 
@@ -299,10 +313,10 @@ int main(int argc, char* argv[]) {
 
 	scene.renderables.push_back(std::make_shared<BVHNode>
 		(
-			glassModel, &mirrorShader, 4,
-			makeTranslationMatrix(Eigen::Vector3f(-1.6f, 0.8f, -1.2f))
-			* makeScaleMatrix(0.5f, 0.8f, 0.8f)
-			* rotateX(-3.0f * M_PI / 180.f)
+			glassModel, &frostMirrorShader, 4, //changed to &frostMirrorShader for new frosted mirror
+			makeTranslationMatrix(Eigen::Vector3f(-1.1f, 0.5f, -0.5f))
+			* makeScaleMatrix(0.5f, 0.8f, 0.9f) //w, h, d
+			* rotateX(-1.0f * M_PI / 180.f)
 		));
 
 	scene.renderables.push_back(std::make_shared<BVHNode>
@@ -350,9 +364,9 @@ int main(int argc, char* argv[]) {
 	lightSources.push_back(std::make_unique<PointLight>(Eigen::Vector3f(0.0f, 4.0f, -2.2f), 18.0f * Eigen::Vector3f(1.0f, 1.0f, 1.0f)));
 	//lightSources.push_back(std::make_unique<DirectionalLight>(Eigen::Vector3f(0.f, -1.f, 1.f), .5f * Eigen::Vector3f(1.f, 1.f, 1.f)));
 	
-	//spotlight: implemented but not used for final scene as point light matched ref image more accurately
+	////spotlight: implemented but not used for final scene as point light matched ref image more accurately
 	//lightSources.push_back(std::make_unique<SpotLight>(Eigen::Vector3f(0.f, -1.f, -2.2f), 18.f * Eigen::Vector3f(1.5f, 1.5f, 1.5f), Eigen::Vector3f(15.f, -2.f, -10.f).normalized(), M_PI / 3.f));
-	//position, colour * intensity, direction it points, cone half-angle (60 deg)
+	////position, colour * intensity, direction it points, cone half-angle (60 deg)
 
 	// *** Render the scene ***
 

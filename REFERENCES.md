@@ -70,3 +70,19 @@ https://sibras.github.io/OpenGL4-Tutorials/docs/Tutorials/06-Tutorial6/
 https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/procedural-texturing.html
 
 https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-texturing/introduction-to-texturing-basic-implementation.html
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/what-is-shading-light-matter-interaction.html
+
+https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+
+https://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/
+
+https://learnopengl.com/Lighting/Materials
+
+https://normalmap.ai/learn/normal-map/
+
+https://learnopengl.com/Advanced-Lighting/Gamma-Correction
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/diffuse-lambertian-shading.html
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel.html

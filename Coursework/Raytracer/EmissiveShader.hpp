@@ -8,8 +8,8 @@
 #include <string>
 #include <algorithm>
 
-///wraps base shader and adds an emissive tex on top
-///black pix in map= no glow, bright pix= glow
+//wraps base shader and adds an emissive tex on top
+//black pix in map= no glow, bright pix= glow
 class EmissiveShader : public Shader
 {
 public:
@@ -57,8 +57,6 @@ public:
         float v = uv.y() - floorf(uv.y());
         int ex = (int)(u * (emissiveW_ - 1));
         int ey = (int)((1.f - v) * (emissiveH_ - 1));
-        //int ex = (int)(uv.x() * (emissiveW_ - 1));
-        //int ey = (int)((1.f - uv.y()) * (emissiveH_ - 1));
         //clamp tex coords
         ex = std::max(0, std::min(ex, (int)emissiveW_ - 1));
         ey = std::max(0, std::min(ey, (int)emissiveH_ - 1));

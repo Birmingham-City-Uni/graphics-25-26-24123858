@@ -105,7 +105,7 @@ public:
             int nx = clampValue((int)(uv.x() * normalW_), 0, (int)normalW_ - 1);
             int ny = clampValue((int)((1.f - uv.y()) * normalH_), 0, (int)normalH_ - 1);
             int ni = (nx + ny * normalW_) * 4;
-            // Normal maps store vectors in tangent space
+            //normal maps store vectors in tangent space
             //rgb values in range (0,255]) are remapped into vector range (-1,1)
             Eigen::Vector3f tangentNormal
             (
@@ -147,6 +147,11 @@ public:
 
         for (auto& light : lights) 
         {
+
+            //shadow test
+            if (!light->visibilityCheck(hitInfo.location, scene))
+                continue;
+
             Eigen::Vector3f L = light->getVecToLight(hitInfo.location).normalized();
             Eigen::Vector3f lint = light->getIntensity(hitInfo.location);
 

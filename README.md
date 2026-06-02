@@ -95,6 +95,65 @@ This is how game engines make neon signs/glowing screens/LEDs look lit up
 ## Raytracer 
 ### Features Implemented
 
+**Gamma correction:**
+Linear colour values produced by the ray tracer are converted to sRGB before
+being written to the output image
+Each colour channel is raised to the power of 1/2.2 
+This prevents the final render from appearing too dark or having incorrect
+brightness compared to how the image would appear on a monitor
+Negative values are clamped to zero before gamma correction to prevent
+invalid results when applying the power function
+
+**Additional light type: Spotlight:**
+SpotLight.hpp created as a new light class 
+The spotlight emits light within a cone defined by a direction vector and
+cone halfangle
+Surface points outside the cone receive no illumination while points inside
+the cone are lit using point light style distance attenuation
+Shadow rays are cast to determine whether a point is occluded before applying
+lighting contributions
+The spotlight was implemented and tested within the scene, however a point
+light was used for the final render as it more closely matched the reference image
+
+**Emissive lighting (cube, button, door, sign):**
+EmissiveShader.hpp created and added to scene to support emissive texture png files
+to allow parts of a texture to appear illuminated independently of scene lighting 
+Custom EmissiveShader was developed using a decorator style approach,
+wrapping an existing material shader and adding an emissive texture pass
+Emissive texture values are sampled using the interpolated UV coordinates
+converted from srgb into linear colour space, then added directly to the final shaded result
+
+**Textured phong shading (cube, button, gun) using Blinn-Phong:**
+TexturedPhongShader used to combine texture mapping with Blinn-Phong lighting
+Shader supports normal maps and specular maps
+Surface colour is sampled from an albedo (diffuse) texture, diffuse
+lighting is calculated using Lamberts cosine law, specular highlights are
+generated using the BlinnPhong half vector
+
+**Normal maping (cube, button, gun):**
+Implemented to add surface detail without increasing mesh complexity
+Project was extended to calculate tangent and bitangent vectors for each 
+triangle from its geometry and UV coordinates
+Vectors are stored in HitInfo and with the interpolated surface normal form TBN
+(tangent, bitangent, normal) 
+Normals sampled from the normal map are transformed from tangent space into world space 
+using the TBN matrix and used during lighting calculations
+This then allows surface detail to influence diffuse and specular lighting with no modification to mesh
+
+**Specular maps(cube, button, gun):**
+Allow different areas of a model to have varying reflection across the surface on a perpixel basis
+Brightness of the specular texture is sampled and used to influence the strength and sharpness of 
+Blinn-Phong specular highlights
+Allowing different parts of a model to appear sniny/matte 
+
+**Frosted mirror shading (glass):**
+FrostedMirrorShader implemented to combine reflective and diffuse material 
+A grayscale texture is sampled using the interpolated uv coords to control blending
+between mirror reflection and Lambertian diffuse shading (per pixel basis)
+Diffuse frosted uses Lamberts cosine law to simulate light scattering across surface
+
+
+
 
 
 ## Learning Resources and References
